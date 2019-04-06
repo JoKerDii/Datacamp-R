@@ -1,0 +1,206 @@
+---
+title: "Datacamp_Data Manipulation in R with dplyr__Summarize and the pipe operator"
+author: "dizhen"
+date: "2019Äê4ÔÂ6ÈÕ"
+output: html_document
+---
+
+
+# The syntax of summarize
+summarize(), the last of the 5 verbs, follows the same syntax as mutate(), but the resulting dataset consists of a single row instead of an entire new column in the case of mutate().
+
+In contrast to the four other data manipulation functions, summarize() does not return an altered copy of the dataset it is summarizing; instead, it builds a new dataset that contains only the summarizing statistics.
+
+Instructions
+
+1. Use summarize() to print out a summary of hflights containing two variables: min_dist, the shortest distance flown, and max_dist, the longest distance flown.
+
+2. Print out a summary of hflights with a single variable, max_div: the longest Distance for diverted flights. You will need one of the four other verbs to do this!
+
+```{r}
+# hflights and dplyr are loaded in the workspace
+
+# Print out a summary with variables min_dist and max_dist
+summarise(hflights,min_dist=min(Distance),max_dist=max(Distance))
+
+# Print out a summary with variable max_div
+summarise(filter(hflights,Diverted==1),max_div=max(Distance))
+
+```
+
+# Aggregate functions
+You can use any function you like in summarize() so long as the function can take a vector of data and return a single number. R contains many aggregating functions, as dplyr calls them:
+
+min(x) - minimum value of vector x.
+max(x) - maximum value of vector x.
+mean(x) - mean value of vector x.
+median(x) - median value of vector x.
+quantile(x, p) - pth quantile of vector x.
+sd(x) - standard deviation of vector x.
+var(x) - variance of vector x.
+IQR(x) - Inter Quartile Range (IQR) of vector x.
+diff(range(x)) - total range of vector x.
+
+Instructions
+
+1. Remove rows that have NAs in the arrival delay column and save the resulting dataset to temp1.
+
+2. Print out a summary of temp1 with the following variables (in this order):
+
+earliest: the minimum arrival delay,
+average: the average arrival delay,
+latest: the longest arrival delay,
+sd: the standard deviation for arrival delays.
+
+3. Filter hflights such that only rows that have no NA TaxiIn and no NA TaxiOut are kept; save this temporary result to temp2.
+
+4. Print out a summary of temp2, with one variable, max_taxi_diff: the biggest absolute difference in time between TaxiIn and TaxiOut for a single flight.
+
+```{r}
+# hflights is available
+
+# Remove rows that have NA ArrDelay: temp1
+temp1 <- filter(hflights,!is.na(ArrDelay))
+
+# Generate summary about ArrDelay column of temp1
+summarise(temp1,earliest=min(ArrDelay),average=mean(ArrDelay),latest=max(ArrDelay),sd=sd(ArrDelay))
+
+# Keep rows that have no NA TaxiIn and no NA TaxiOut: temp2
+temp2 <- filter(hflights, !is.na(TaxiIn) & !is.na(TaxiOut))
+
+# Print the maximum taxiing difference of temp2 with summarize()
+summarise(temp2,max_taxi_diff=max(abs(TaxiIn-TaxiOut)))
+```
+
+# dplyr aggregate functions
+dplyr provides several helpful aggregate functions of its own, in addition to the ones that are already defined in R. These include:
+
+first(x) - The first element of vector x.
+last(x) - The last element of vector x.
+nth(x, n) - The nth element of vector x.
+n() - The number of rows in the data.frame or group of observations that summarize() describes.
+n_distinct(x) - The number of unique values in vector x.
+Next to these dplyr-specific functions, you can also turn a logical test into an aggregating function with sum() or mean(). A logical test returns a vector of TRUE's and FALSE's. When you apply sum() or mean() to such a vector, R coerces each TRUE to a 1 and each FALSE to a 0. sum() then represents the total number of observations that passed the test; mean() represents the proportion.
+
+Instructions
+
+1. Print out a summary of hflights with the following variables:
+
+n_obs: the total number of observations,
+n_carrier: the total number of carriers,
+n_dest: the total number of destinations,
+
+2. aa, a tbl with all flights flown by American Airlines, is already available.
+
+3. Print out a summary of aa with the following variables:
+
+n_flights: the total number of flights (each observation is a flight),
+n_canc: the total number of cancelled flights,
+avg_delay: the average arrival delay of flights whose delay is not NA (na.rm = TRUE).
+
+```{r}
+# Generate summarizing statistics for hflights
+summarize(hflights,
+          n_obs = n(),
+          n_carrier = n_distinct(UniqueCarrier),
+          n_dest = n_distinct(Dest))
+
+# All American Airline flights
+aa <- filter(hflights, UniqueCarrier == "American")
+
+# Generate summarizing statistics for aa 
+summarize(aa,n_flights = n(),n_canc = sum(Cancelled==1),avg_delay = mean(ArrDelay,na.rm=TRUE))
+```
+
+# Overview of syntax
+As another example of the %>%, have a look at the following two commands that are completely equivalent:
+
+mean(c(1, 2, 3, NA), na.rm = TRUE)
+c(1, 2, 3, NA) %>% mean(na.rm = TRUE)
+The %>% operator allows you to extract the first argument of a function from the arguments list and put it in front of it, thus solving the Dagwood sandwich problem.
+
+Instructions
+
+Use dplyr functions and the pipe operator to transform the following English sentences into R code:
+
+1. Take the hflights data set and then ...
+2. Add a variable named diff that is the result of subtracting TaxiIn from TaxiOut, and then ...
+3. Pick all of the rows whose diff value does not equal NA, and then ...
+4. Summarize the data set with a value named avg that is the mean diff value.
+
+```{r}
+# hflights and dplyr are both loaded and ready to serve you
+
+# Write the 'piped' version of the English sentences.
+hflights %>% mutate(diff = TaxiOut-TaxiIn) %>%filter(!is.na(diff)) %>% summarise(avg = mean(diff)) 
+```
+
+# Drive or fly? Part 1 of 2
+You can answer sophisticated questions by combining the verbs of dplyr. Over the next few exercises you will examine whether it sometimes makes sense to drive instead of fly. You will begin by making a data set that contains relevant variables. Then, you will find flights whose equivalent average velocity is lower than the velocity when traveling by car.
+
+In the following instructions, you have to carry out a series of dplyr verbs on the hflights dataset. Make sure to use the %>% operator to chain them all together.
+
+Instructions
+
+1. mutate() the hflights dataset and add two variables:
+
+RealTime: the actual elapsed time plus 100 minutes (for the overhead that flying involves) and
+mph: calculated as 60 times Distance divided by RealTime, then
+
+2. filter() to keep observations that have an mph that is not NA and that is below 70, finally
+
+3. summarize() the result by creating four summary variables:
+
+n_less, the number of observations,
+n_dest, the number of destinations,
+min_dist, the minimum distance and
+max_dist, the maximum distance.
+
+```{r}
+# Chain together mutate(), filter() and summarize()
+hflights %>% mutate(RealTime=ActualElapsedTime+100,mph=Distance / RealTime * 60) %>% filter(!is.na(mph),mph<70) %>% summarise(n_less=n(),n_dest=n_distinct(Dest),min_dist=min(Distance),max_dist=max(Distance))
+```
+
+# Drive or fly? Part 2 of 2
+The previous exercise suggested that some flights might be less efficient than driving in terms of speed. But is speed all that matters? Flying imposes burdens on a traveler that driving does not. For example, airplane tickets are very expensive. Air travelers also need to limit what they bring on their trip and arrange for a pick up or a drop off. Given these burdens we might demand that a flight provide a large speed advantage over driving.
+
+Let's define preferable flights as flights that are at least 50% faster than driving, i.e. that travel 105 mph or greater in real time. Also, assume that cancelled or diverted flights are less preferable than driving.
+
+The mutate() call from the previous exercise is already coded up; can you add more pipes and verbs to the command?
+
+Instructions
+
+1. filter() the result of mutate to:
+
+2. keep observations that have an mph under 105 or for which Cancelled equals 1 or for which Diverted equals 1.
+
+summarize() the result by creating four summary variables:
+n_non, the number of observations,
+n_dest, the number of destinations,
+min_dist, the minimum distance and
+max_dist, the maximum distance.
+
+```{r}
+# Finish the command with a filter() and summarize() call
+hflights %>%
+  mutate(
+    RealTime = ActualElapsedTime + 100, 
+    mph = 60 * Distance / RealTime
+  ) %>% filter(mph < 105 | Cancelled == 1 | Diverted == 1) %>% summarize(n_non = n(), n_dest = n_distinct(Dest), min_dist = min(min(Distance)), max_dist = max(Distance))
+```
+# Advanced piping exercise
+Let's use hflights to answer another question: How many flights were overnight flights?
+
+Instructions
+
+1. filter() the hflights tbl to keep only observations whose DepTime is not NA, whose ArrTime is not NA and for which DepTime exceeds ArrTime.
+
+2. Pipe the result into a summarize() call to create a single summary variable: num, that simply counts the number of observations.
+
+```{r}
+# hflights and dplyr are loaded
+
+# Count the number of overnight flights
+hflights %>% filter(!is.na(DepTime),!is.na(ArrTime),DepTime > ArrTime) %>% summarize(num = n())
+```
+

@@ -1,0 +1,155 @@
+---
+title: "Datacamp_Data Manipulation in R with dplyr__Filter and arrange"
+author: "dizhen"
+date: "2019Äê4ÔÂ5ÈÕ"
+output: html_document
+---
+# Logical operators
+R comes with a set of logical operators that you can use inside filter():
+
+x < y, TRUE if x is less than y
+x <= y, TRUE if x is less than or equal to y
+x == y, TRUE if x equals y
+x != y, TRUE if x does not equal y
+x >= y, TRUE if x is greater than or equal to y
+x > y, TRUE if x is greater than y
+x %in% c(a, b, c), TRUE if x is in the vector c(a, b, c)
+The following example filters df such that only the observations for which a is positive, are kept:
+
+filter(df, a > 0)
+
+Instructions
+
+1. Print out all flights in hflights that traveled 3000 or more miles.
+2. Print out all flights in hflights flown by JetBlue, Southwest, or Delta.
+3. Extract from hflights all flights where taxiing took longer than the actual flight. Avoid the use of mutate() and do the math directly in the logical expression of filter().
+
+```{r}
+# hflights is at your disposal as a tbl, with clean carrier names
+
+# All flights that traveled 3000 miles or more
+filter(hflights, Distance >= 3000)
+
+# All flights flown by one of JetBlue, Southwest, or Delta
+filter(hflights, UniqueCarrier %in% c("JetBlue", "Southwest", "Delta"))
+
+# All flights where taxiing took longer than flying
+filter(hflights,TaxiIn+TaxiOut > AirTime)
+```
+
+# Combining tests using boolean operators
+R also comes with a set of boolean operators that you can use to combine multiple logical tests into a single test. These include & (and), | (or), and ! (not). Instead of using the & operator, you can also pass several logical tests to filter(), separated by commas. The following two calls are completely equivalent:
+
+filter(df, a > 0 & b > 0)
+filter(df, a > 0, b > 0)
+Next, is.na() will also come in handy. This example keeps the observations in df for which the variable x is not NA:
+
+filter(df, !is.na(x))
+
+Instructions
+
+1. Use R's logical and boolean operators to select just the rows where a flight left before 5:00 am (500) or arrived after 10:00 pm (2200).
+2. Print out all of the flights that departed late but arrived ahead of schedule. 3. Use DepDelay and ArrDelay for this.
+4. Find all of the flights that were cancelled after being delayed. These are flights that were cancelled, while having a DepDelay greater than zero.
+
+```{r}
+# hflights is at your service as a tbl!
+
+# All flights that departed before 5am or arrived after 10pm
+filter(hflights, DepTime<500|ArrTime>2200)
+
+# All flights that departed late but arrived ahead of schedule
+filter(hflights, DepDelay>0 & ArrDelay<0)
+
+# All flights that were cancelled after being delayed
+filter(hflights, DepDelay>0&Cancelled==1)
+```
+
+# Blend together what you've learned!
+So far, you have learned three data manipulation functions in the dplyr package. Time for a summarizing exercise. You will generate a new dataset from the hflights dataset that contains some useful information on flights that had JFK airport as their destination. You will need select(), mutate() and filter().
+
+Instructions
+
+1. First, use filter() to select the flights that had JFK as their destination and save this result to c1.
+
+2. Second, add a new column named Date to c1: paste() together the Year, Month and DayofMonth variables, separate them by a "-" by using the sep attribute of paste(). Save the resulting data frame as c2.
+
+3. Finally, select some columns to provide an overview: Date, DepTime, ArrTime and TailNum, in this order. Do not assign the resulting data frame to a variable; just print it to the console.
+
+```{r}
+# hflights is already available in the workspace
+names(hflights)
+# Select the flights that had JFK as their destination: c1
+c1 <- filter(hflights, Dest == "JFK")
+
+# Combine the Year, Month and DayofMonth variables to create a Date column: c2
+c2 <- mutate(c1,Date=paste(Year, Month, DayofMonth,sep="-"))
+
+# Print out a selection of columns of c2
+select(c2, Date, DepTime, ArrTime,TailNum)
+```
+# Recap on select, mutate and filter
+With select(), mutate() and filter(), you can already reveal interesting information from a dataset. Through a combination of these expressions or by the use of a one-liner, try to answer the following question:
+
+How many weekend flights flew a distance of more than 1000 miles but had a total taxiing time below 15 minutes?
+
+The hflights dataset is pre-loaded as a tbl so you can start experimenting immediately.
+
+```{r}
+filter(hflights, DayOfWeek %in% c(6,7), Distance > 1000, TaxiIn + TaxiOut < 15)
+```
+Answer : 155
+
+# Arranging your data
+arrange() can be used to rearrange rows according to any type of data. If you pass arrange() a character variable, for example, R will rearrange the rows in alphabetical order according to values of the variable. If you pass a factor variable, R will rearrange the rows according to the order of the levels in your factor (running levels() on the variable reveals this order).
+
+dtc has already been defined on the right. It's up to you to write some arrange() expressions to display its contents appropriately!
+
+Instructions
+
+1. Arrange dtc, by departure delays so that the shortest departure delay is at the top of the data set.
+
+2. Arrange dtc so that flights that were cancelled for the same reason appear next to each other.
+
+3. Arrange dtc so that flights by the same carrier appear next to each other. Within each carrier, flights that have smaller departure delays appear before flights that have higher departure delays. Do this in a one-liner.
+
+```{r}
+# Arrange dtc by departure delays
+arrange(dtc, DepDelay)
+
+# Arrange dtc so that cancellation reasons are grouped
+arrange(dtc,CancellationCode)
+
+# Arrange dtc according to carrier and departure delays
+arrange(dtc,UniqueCarrier,DepDelay)
+```
+
+# Reverse the order of arranging
+By default, arrange() arranges the rows from smallest to largest. Rows with the smallest value of the variable will appear at the top of the data set. You can reverse this behavior with the desc() function. arrange() will reorder the rows from largest to smallest values of a variable if you wrap the variable name in desc() before passing it to arrange().
+
+Instructions
+
+1. Arrange hflights so that flights by the same carrier appear next to each other and within each carrier, flights that have larger departure delays appear before flights that have smaller departure delays.
+
+2. Arrange the flights in hflights by their total delay (the sum of DepDelay and ArrDelay). Try to do this directly inside arrange().
+
+```{r}
+# dplyr and the hflights tbl are available
+
+# Arrange according to carrier and decreasing departure delays
+arrange(hflights,UniqueCarrier,desc(DepDelay))
+
+# Arrange flights by total delay (normal order).
+arrange(hflights, DepDelay + ArrDelay)
+
+```
+
+# Recap on select, mutate, filter and arrange
+Four down, one more to go! As you might have noticed, your data analysis possibilities expand with every dplyr verb you learn. Can you find the appropriate strategy for the following problem?
+
+What steps do you take to print only the TailNum of hflights, only for flights that departed too late, sorted by total taxiing time?
+
+Answer:
+
+First filter(), then mutate(), arrange() and finally select().
+
