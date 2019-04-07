@@ -1,0 +1,307 @@
+---
+title: "Datacamp_Joining Data in R with dplyr__Filtering joins and set operations"
+author: "dizhen"
+date: "2019Äê4ÔÂ6ÈÕ"
+output: html_document
+---
+# Apply a semi-join
+As you saw in the video, semi-joins provide a concise way to filter data from the first dataset based on information in a second dataset.
+
+For example, the code in the editor uses semi_join() to create a data frame of the artists in artists who have written a song in songs.
+
+Instructions
+
+1. Run the semi_join() command to see its output.
+
+2. Then fill in the blanks of the right_join(), filter(), and select() calls to create the same result (but with the rows in a different order).
+
+```{r}
+# View the output of semi_join()
+artists %>% 
+  semi_join(songs, by = c("first", "last"))
+
+# Create the same result
+artists %>% 
+  right_join(songs, by = c("first", "last")) %>% 
+  filter(!is.na(instrument)) %>% 
+  select("first", "last", "instrument")
+```
+
+# Exploring with semi-joins
+Semi-joins provide a useful way to explore the connections between multiple tables of data.
+
+For example, you can use a semi-join to determine the number of albums in the albums dataset that were made by a band in the bands dataset.
+
+Instructions
+
+1. For the first pipe, use semi_join() to collect the albums in albums that were made by a band in bands.
+
+2.For the second pipe, use nrow() to count how many albums were made by a band in the dataset.
+
+```{r}
+albums %>% 
+  # Collect the albums made by a band
+  semi_join(bands,by = 'band') %>% 
+  # Count the albums made by a band
+  nrow()
+```
+  
+# A more precise way to filter?
+We've attempted to rewrite this semi-join as a filter. Will it return the same results?
+
+```{r}
+tracks %>% semi_join(
+  matches,
+  by = c("band", "year", "first")
+)
+
+tracks %>% filter(
+  (band == "The Beatles" & 
+     year == 1964 & first == "Paul") |
+    (band == "The Beatles" & 
+       year == 1965 & first == "John") |
+    (band == "Simon and Garfunkel" & 
+       year == 1966 & first == "Paul")
+)
+```
+
+Answer:
+Yes, but look at how much more code the filter requires!
+
+# Apply an anti-join
+As Garrett mentioned in the video, anti-joins provide a useful way to reason about how a mutating join will work before you apply the join.
+
+For example, you can use an anti-join to see which rows will not be matched to a second dataset by a join.
+
+Instructions
+
+1. Use an anti_join() to return the rows of artists for which you don't have any bands info. Note: 
+2. Don't forget to mention the by argument.
+
+```{r}
+# Return rows of artists that don't have bands info
+artists %>% 
+  anti_join(bands)
+```
+
+# Apply another anti-join
+Anti-joins with anti_join() also provide a great way to diagnose joins that go wrong.
+
+For example, they can help you zero-in on rows that have capitalization or spelling errors in the keys. These things will make your primary and secondary keys appear different to R, even though you know they refer to the same thing.
+
+Instructions
+
+1. labels describes the record labels of the albums in albums. Compare the spellings of album names in labels with the names in albums. Are any of the album names of labels mis-entered? Use anti_join() to check. Note: Don't forget to mention the by argument.
+
+```{r}
+# Check whether album names in labels are mis-entered
+labels %>% 
+  anti_join(albums)
+```
+
+# Which filtering join?
+Think you have filtering joins down? Let's check.
+
+Which filtering join would you use to determine how many rows in songs match a label in labels?
+
+Instructions
+
+1. Determine which key joins labels and songs.
+
+2. Use a filtering join to find the rows of songs that match a row in labels.
+
+3. Use nrow() to determine how many matches exist between labels and songs.
+
+```{r}
+# Determine which key joins labels and songs
+labels
+songs
+
+# Check your understanding
+songs %>% 
+  # Find the rows of songs that match a row in labels
+  semi_join(labels, by = 'album') %>% 
+  # Number of matches between labels and songs
+  nrow()
+```
+
+# How many songs are there?
+We have loaded two datasets in your workspace, aerosmith and greatest_hits, each of which represents an album from the band Aerosmith. Each row in either of the datasets is a song on that album.
+
+How many unique songs do these two albums contain in total?
+
+Instructions
+
+1. Use a set operation to create a dataset with every song contained on aerosmith and/or greatest_hits.
+
+2. Use nrow() to count the total number of songs.
+
+```{r}
+aerosmith %>% 
+  # Create the new dataset using a set operation
+  union(greatest_hits) %>% 
+  # Count the total number of songs
+  nrow()
+```
+
+# Greatest hits
+Which songs from Aerosmith made it onto Greatest Hits?
+
+Instructions
+
+1. Use a set operation to create a dataset containing every track that is in both Aerosmith and Greatest Hits.
+
+```{r}
+# Create the new dataset using a set operation
+aerosmith %>% 
+  intersect(greatest_hits)
+```
+
+# Live! Bootleg songs
+live contains the songs from a third Aerosmith album, Live! Bootleg.
+
+Which songs are on Live! Bootleg but not on Greatest Hits? Notice that the length of songs may be different when they are performed live.
+
+Instructions
+
+1. Select just the song names from live.
+
+2. Select just the song names from greatest_hits.
+
+3. Use a set operation to create a dataset of songs in live that are not in greatest_hits.
+
+```{r}
+# Select the song names from live
+live_songs <- live %>% select(song)
+
+# Select the song names from greatest_hits
+greatest_songs <- greatest_hits %>% select(song)
+
+# Create the new dataset using a set operation
+live_songs %>% 
+  setdiff(greatest_songs)
+```
+
+# Multiple operations
+There is no set operation to find rows that appear in one data frame or another, but not both. However, you can accomplish this by combining set operators, as Garrett showed in the video.
+
+Can you think of a combination that would answer the question, "Which songs appear on one of Live! Bootleg or Greatest Hits, but not both?"
+
+You'll need setdiff(), intersect(), and union(), but not necessarily in that order.
+
+Instructions
+
+1. From live, select the song column, and assign to live_songs.
+
+2. From greatest_hits, again select the song column, this time assigning to greatest_songs.
+
+3. Find the songs in live_songs or greatest_songs or both, assigning to all_songs.
+
+4. Find the songs that are in both live_songs and greatest_songs, assigning to common_songs.
+
+5. Find the songs that are in live_songs or greatest_songs but not both.
+
+```{r}
+# Select songs from live and greatest_hits
+live_songs <- live %>% select(song)
+greatest_songs <- greatest_hits %>% select(song)
+
+# Find songs in at least one of live_songs and greatest_songs
+all_songs <- union(live_songs,greatest_songs)
+
+# Find songs in both 
+common_songs <- intersect(live_songs,greatest_songs)
+
+# Find songs that only exist in one dataset
+live_songs %>%
+setdiff(greatest_songs) %>%
+union(greatest_songs %>% setdiff(live_songs))
+```
+
+# Unique values
+eagles1974 contains five rows, one for each member of the Eagles (a band) in 1974. Likewise, eagles1971 contains four rows, one for each member of the band in 1971.
+
+Examine the contents of each dataset, then determine how many rows will be in the union of eagles1974 with eagles1971. Does something surprising happen here?
+
+Answer: 4
+```{r}
+eagles1971 %>% union(eagles1974) %>% nrow()
+```
+
+# Apply setequal
+definitive and complete contain the songs that appear in competing Led Zeppelin anthologies: The Definitive Collection and The Complete Studio Recordings, respectively.
+
+Both anthologies claim to contain the complete studio recordings of Led Zeppelin, but do the anthologies contain the same exact songs?
+
+Instructions
+
+1. Use identical() to determine whether definitive and complete contain the same songs in the same order.
+
+2. Use setequal() to determine whether definitive and complete contain the same songs in any order.
+
+3. Use setdiff() to see which songs (if any) are in definitive but not complete.
+
+4. Use setdiff() to see which songs (if any) are in complete but not definitive.
+
+```{r}
+# Check if same order: definitive and complete
+identical(definitive, complete)
+
+# Check if any order: definitive and complete
+setequal(definitive, complete)
+
+# Songs in definitive but not complete
+setdiff(definitive, complete)
+
+# Songs in complete but not definitive
+setdiff(complete, definitive)
+```
+
+
+# Apply setequal again
+A few exercises ago, you saw that an intersect() is analagous to a semi_join() when two datasets contain the same variables and each variable is used in the key.
+
+Under these conditions, setdiff() is also analagous to one of the filtering joins.
+
+Instructions
+
+1. Write a filtering join that returns songs in definitive that are not in complete. Are there any?
+
+2. Write a filtering join that returns songs in complete that are not in definitive. Are there any?
+
+```{r}
+# Return songs in definitive that are not in complete
+definitive %>% 
+  setdiff(complete)
+
+# Return songs in complete that are not in definitive
+complete %>% 
+  setdiff(definitive)
+```
+
+# Comparing albums
+It appears that The Definitive Collection contains songs from the soundtrack of The Song Remains the Same, a movie filmed during a live Led Zeppelin concert. Is this the only difference between The Definitive Collection and The Complete Studio Recordings?
+
+Instructions
+
+The songs from The Song Remains the Same are contained in soundtrack.
+
+1. Get the union of complete and soundtrack, assigning to complete_and_soundtrack.
+
+2. Use identical() to check if definitive and complete_and_soundtrack contain the same songs in the same order.
+
+3. Use setequal() to check if definitive and complete_and_soundtrack contain the same songs in any order.
+
+```{r}
+# Get union of complete and soundtrack
+complete_and_soundtrack <- union(complete, soundtrack)
+
+# Check if same, including order: definitive and union of complete and soundtrack
+complete_and_soundtrack %>%
+  identical(definitive)
+
+# Check if same, rows in any order: definitive and union of complete and soundtrack
+complete_and_soundtrack %>%
+  setequal(definitive)
+```
+

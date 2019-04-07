@@ -1,0 +1,348 @@
+---
+title: "Datacamp_Joining Data in R with dplyr__Case study"
+author: "dizhen"
+date: "2019Äê4ÔÂ7ÈÕ"
+output: html_document
+---
+# Universal keys?
+As Garrett mentioned, the Lahman database contains 26 datasets. Before starting to analyze the data, you'll examine how the datasets are related to each other.
+
+In particular, do any variable names span all of the datasets?
+
+Instructions
+
+1. Examine lahmanNames by printing it to the console. It is a list of 26 data frames, each of which contains the variable names of one dataset in the Lahman package.
+
+2. Use purrr's reduce() and a single set operation to return a data frame that contains every variable that appears in all 26 datasets (if any does).
+
+```{r}
+# Examine lahmanNames
+lahmanNames
+
+# Find variables in common
+reduce(lahmanNames,intersect)
+```
+
+# Common keys
+No variables span all 26 datasets, but several variables span more than one dataset. These variables provide relationships between the various tables in Lahman. Can you find them?
+
+Instructions
+
+1. Bind the data frames in lahmanNames into a single table that includes a new column called dataframe, which contains the names of the data frames.
+
+2. Group the result by var.
+
+3. Tally the number of appearances of each var.
+
+4. Filter the data to only variables that appear more than once.
+
+5. Arrange the results so that the most frequently used variables appear before less frequently used variables.
+
+```{r}
+lahmanNames %>%  
+  # Bind the data frames in lahmanNames
+  bind_rows(.id = "dataframe") %>%
+  # Group the result by var
+  group_by(var) %>%
+  # Tally the number of appearances
+  tally() %>%
+  # Filter the data
+  filter(n > 1) %>% 
+  # Arrange the results
+  arrange(desc(n))
+```
+
+# playerID
+In the last exercise, you saw that playerID is one of the most widely used keys in the Lahman database. Which datasets use playerID?
+
+Instructions
+
+1. Bind the data frames in lahmanNames into a single table that includes the column dataframe, which contains the names of the data frames.
+
+2. Filter the results to just rows that contain playerID.
+
+3. Extract the dataframe variable.
+
+```{r}
+lahmanNames %>% 
+  # Bind the data frames
+  bind_rows(.id = "dataframe") %>%
+  # Filter the results
+  filter(var == "playerID") %>% 
+  # Extract the dataframe variable
+  `$`(dataframe)
+```
+
+# Who are the players?
+Before we look at salaries, let's begin by ensuring that we have salary information for each player in the database, or at least no systematic holes in our coverage.
+
+To do this we will need a list of every player to compare against salaries. The Master dataset contains all of the players in the database, but it may contain multiple rows for each player.
+
+How should you proceed?
+
+In the video, you saw how to use distinct() to find unique rows for all columns in a table. You can also find unique rows for specific columns using the following syntax:
+
+```{r}
+tbl %>%
+  # Find unique rows of columns a,b, and c
+  distinct(a, b, c)
+```
+
+Instructions
+
+1. Use Master to create players, a data frame that contains one row and three columns for each distinct player. The columns should be playerID, nameFirst, and nameLast, in that order.
+
+```{r}
+players <- Master %>% 
+  # Return one row for each distinct player
+  distinct(playerID,nameFirst, nameLast)
+```
+
+# Missing salaries
+Now that we know who the players are, let's check our salary coverage. How many players are completely missing salary information?
+
+Instructions
+
+1. Use a join to find all of the players who do not appear in Salaries.
+
+2. Then use the dplyr function count() to count how many players do not appear in Salaries.
+
+```{r}
+players %>% 
+  # Find all players who do not appear in Salaries
+  anti_join(Salaries) %>%
+  # Count them
+  count()
+```
+
+# Unpaid games?
+Now that we know there is a huge hole in the salary data, let's see if we can explain it. Is it possible that these players somehow did not play (and hence did not earn a salary)?
+
+We can check with the Appearances data frame. Appearances contains information about every game played in major league baseball. That is, if a player played a game, it would show up as a row in Appearances.
+
+Instructions
+
+Add a join to the pipe to determine how many (if any) unsalaried players played at least one game.
+
+```{r}
+players %>% 
+  anti_join(Salaries, by = "playerID") %>% 
+  # How many unsalaried players appear in Appearances?
+  semi_join(Appearances, by = "playerID") %>% 
+  count()
+
+```
+
+# How many games?
+Perhaps the unsalaried players only played one or two games, and hence did not earn a full salary. Can you determine how many games each of these unsalaried players played?
+
+Instructions
+
+1. Recalculate the list of players who do not appear in Salaries with the anti_join() function.
+
+2. Then left join them to Appearances.
+
+3. Group the data by playerID and calculate the total_games that each player played. This will be the sum() of G_all, ignoring NAs .
+
+4. Arrange the summarized data in descending order by total_games.
+
+```{r}
+players %>% 
+  # Find all players who do not appear in Salaries
+  anti_join(Salaries, by = "playerID") %>% 
+  # Join them to Appearances
+  left_join(Appearances, by = "playerID") %>% 
+  # Calculate total_games for each player
+  group_by(playerID) %>%
+  summarize(total_games = sum(G_all, na.rm = TRUE)) %>%
+  # Arrange in descending order by total_games
+  arrange(desc(total_games))
+```
+
+# How many at-bats?
+Is it possible that the unsalaried players did not actually play in the games that they appeared in? One way to check would be to determine if the players had an at-bat (i.e. batted) in the games that they appeared in.
+
+Instructions
+
+Repeat your process in the previous exercise with Batting instead of Appearances:
+
+1. Find the unsalaried players.
+
+2. Left join Batting to the unsalaried players.
+
+3. Group by player (e.g. playerID).
+
+4. Calculate the sum of at-bats for each player as total_at_bat; this will be the sum of the AB variable in Batting, ignoring all NAs.
+
+5. Arrange in descending order of at-bats.
+
+```{r}
+players %>%
+  # Find unsalaried players
+  anti_join(Salaries, by = "playerID") %>% 
+  # Join Batting to the unsalaried players
+  left_join(Batting, by = "playerID") %>% 
+  # Group by player
+  group_by(playerID) %>% 
+  # Sum at-bats for each player
+  summarize(total_at_bat = sum(AB, na.rm = TRUE)) %>% 
+  # Arrange in descending order
+  arrange(desc(total_at_bat))
+```
+
+# Hall of fame nominations
+As Garrett mentioned, the Hall of Fame is a collection of distinguished baseball players selected by a committee of baseball experts. As with any hall of fame, more players are nominated for membership than are actually admitted.
+
+Let's see how many players have been nominated for the Hall of Fame.
+
+Instructions
+
+1. Create nominated, a data frame that contains the distinct players (by playerID) that appear in the HallOfFame dataset.
+
+2. Count the number of players in nominated with count().
+
+3. Add nameFirst and nameLast values from the Master data frame to nominated. Store the result to a data frame called nominated_full.
+
+```{r}
+# Find the distinct players that appear in HallOfFame
+nominated <- HallOfFame %>% 
+  distinct(playerID)
+
+nominated %>% 
+  # Count the number of players in nominated
+  count()
+
+nominated_full <- nominated %>% 
+  # Join to Master
+  left_join(Master[,c("playerID","nameFirst","nameLast")],by = "playerID")%>% 
+  # Return playerID, nameFirst, nameLast
+  select(playerID,nameFirst,nameLast)
+```
+
+# Hall of fame inductions
+In the previous exercise, we saw that 1,239 players were nominated for the hall of fame. Let's now see how many players were admitted to the hall of fame to examine how selective the voting process is.
+
+Instructions
+
+1. Repeat the process you saw in the last exercise to create inducted, a data frame that contains the distinct players (by playerID) that appear in HallOfFame and have the value inducted == "Y".
+
+2£¬Count the number of players in inducted with count().
+
+3. Add nameFirst and nameLast values from the Master data frame to inducted. Store the result to a data frame called inducted_full.
+
+```{r}
+# Find distinct players in HallOfFame with inducted == "Y"
+inducted <- HallOfFame %>% 
+  filter(inducted == 'Y') %>% 
+  distinct(playerID)
+
+inducted %>% 
+  # Count the number of players in inducted
+  count()
+
+inducted_full <- inducted %>% 
+  # Join to Master
+  left_join(Master[,c("playerID","nameFirst","nameLast")], by = "playerID") %>% 
+  # Return playerID, nameFirst, nameLast
+  select(playerID, nameFirst, nameLast)
+```
+
+# Awards
+Now that we know who was inducted and who was nominated, let's examine what separates the nominees who were inducted from the nominees who were not.
+
+Let's start with a simple question: Did nominees who were inducted earn more awards than nominees who were not inducted?
+
+We can use AwardsPlayers to answer the question. It lists the playerID's of players who won baseball awards, and it contains one row for each award awarded in major league baseball.
+
+Instructions
+
+1. tally() the number of awards in AwardsPlayers for each playerID and save the results as nAwards. Note that the resulting column containing the number of awards is called n by default.
+
+2. Filter nAwards to include the players in inducted and calculate the mean number of awards per player (set na.rm = TRUE). Call the mean number of awards avg_n.
+
+3£¬Filter nAwards to include the players in nominated who are not present in inducted and calculate the mean number of awards per player (set na.rm = TRUE). Again, call the mean number of awards avg_n.
+
+```{r}
+# Tally the number of awards in AwardsPlayers by playerID
+nAwards <- AwardsPlayers %>% 
+  group_by(playerID) %>% 
+  tally()
+
+nAwards %>% 
+  # Filter to just the players in inducted 
+  semi_join(inducted,by = "playerID") %>% 
+  # Calculate the mean number of awards per player
+  summarize(avg_n = mean(n, na.rm = TRUE))
+
+nAwards %>% 
+  # Filter to just the players in nominated 
+  semi_join(nominated,by = "playerID") %>% 
+  # Filter to players NOT in inducted 
+  anti_join(inducted,by = "playerID") %>% 
+  # Calculate the mean number of awards per player
+  summarize(avg_n = mean(n, na.rm = TRUE))
+```
+
+# Salary
+Salary may provide another way to differentiate inductees from non-inductees. Does the maximum salary earned by inductees tend to be greater than the maximum salary earned by nominees who were not inducted?
+
+Instructions
+
+1. Create notInducted, a dataset that contains the rows of nominated that are not in inducted using a set operation.
+
+2. Filter Salaries against notInducted to return only the salaries of nominees who were not inducted.
+Then calculate the max salary for each player in the results. Call this variable max_salary.
+Then in a separate summarize() call, calculate the average of the max salaries. Call this variable avg_salary.
+
+3. Repeat the process for the players in inducted.
+
+```{r}
+# Find the players who are in nominated, but not inducted
+notInducted <- nominated %>% 
+  anti_join(inducted, by = "playerID") # setdiff() is more correct
+
+Salaries %>% 
+  # Find the players who are in notInducted
+  semi_join(notInducted, by = "playerID") %>% 
+  # Calculate the max salary by player
+  group_by(playerID) %>% 
+  summarize(max_salary = max(salary)) %>% 
+  # Calculate the average of the max salaries
+  summarize(avg_salary = mean(max_salary))
+
+# Repeat for players who were inducted
+Salaries %>% 
+  semi_join(inducted, by = "playerID") %>% 
+  group_by(playerID) %>% 
+  summarize(max_salary = max(salary)) %>% 
+  summarize(avg_salary = mean(max_salary))
+```
+
+# Retirement
+One of the rules of the Hall of Fame is that players cannot be nominated until five years after they retire. Is this reflected in our data?
+
+Instructions
+
+Use Appearances to determine the year of the last appearance of each player nominated to the Hall of Fame. Compare it to the year(s) they were nominated to determine whether any players were nominated before they completely retired. You'll want to:
+
+1. Filter Appearances against nominated to get the information in Appearances for all nominated players.
+
+2. Use dplyr methods to find the last year played by player. Call this last_year within your summarize() call.
+
+3. Left join the results to the full HallOfFame dataset.
+
+4. Use dplyr methods to spot unusual observations.
+
+```{r}
+Appearances %>% 
+  # Filter Appearances against nominated
+  semi_join(nominated, by = "playerID") %>% 
+  # Find last year played by player
+  group_by(playerID) %>% 
+  summarize(last_year = max(yearID, na.rm = TRUE)) %>% 
+  # Join to full HallOfFame
+  left_join(HallOfFame, by = 'playerID') %>% 
+  # Filter for unusual observations
+  filter(last_year >= yearID)
+```
+

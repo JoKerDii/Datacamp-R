@@ -1,0 +1,223 @@
+---
+title: "Datacamp_Joining Data in R with dplyr__Advanced joining"
+author: "dizhen"
+date: "2019Äê4ÔÂ6ÈÕ"
+output: html_document
+---
+# Spot the key
+R's data frames can store important information in the row.names attribute. This is not a tidy way to store data, but it does happen quite commonly. If the primary key of your dataset is stored in row.names, you will have trouble joining it to other datasets.
+
+For example, stage_songs contains information about songs that appear in musicals. However, it stores the primary key (song name) in the row.names attribute. As a result, you cannot access the key with a join function.
+
+One way to remedy this problem is to use the function rownames_to_column() from the tibble package. rownames_to_column() returns a copy of a dataset with the row names added to the data as a column.
+
+Instructions
+
+1. Load the tibble package.
+2. Use rownames_to_column() to add the row names of stage_songs to the data frame as a column named song.
+3. Left join stage_writers to stage_songs.
+
+```{r}
+# Load the tibble package
+library(tibble)
+
+stage_songs %>% 
+  # Add row names as a column named song
+  rownames_to_column(var = "song") %>% 
+  # Left join stage_writers to stage_songs
+  left_join(stage_writers)
+```
+
+# Non-unique keys
+shows and composers provide some more information about songs that appear in musicals.
+
+You can join the two datasets by the musical column, which appears in both the datasets. However, you will run into a glitch: the values of musical do not uniquely identify the rows of composers. For example, two rows have the value "The Sound of Music" for musical and two other rows have the value "The King and I".
+
+How many entries (rows) will dplyr create for The Sound of Music if you left join composers to shows by musical?
+
+Answer: 2
+
+```{r}
+shows %>% left_join(composers, by = "musical")
+
+```
+# Two non-unique keys
+You saw in the last exercise that if a row in the primary dataset contains multiple matches in the secondary dataset, left_join() will duplicate the row once for every match. This is true for all of dplyr's join functions.
+
+Now, let's see how this rule would apply when the primary dataset contains duplicate key values.
+
+show_songs contains songs that appear in the musicals written by the composers. You can join the two by the musical column, but like composers, show_songs has two rows where musical == "The Sound of Music".
+
+How many entries (rows) will exist for The Sound of Music if you left join composers to show_songs by musical?
+
+Answer: 4
+```{r}
+show_songs %>% left_join(composers, by = "musical")
+```
+# Missing keys
+Julie Andrews is a famous singer who performed in The Sound of Music, which is documented in the singers data frame. The two_songs data frame records a couple of songs that she sang during her career.
+
+Unfortunately, when you join the datasets together, something odd happens. According to the result, who sings A Spoonful of Sugar? Why does this happen?
+
+You can avoid this outcome by removing rows that contain NAs in the keys before joining.
+
+Instructions
+
+Take a look at singers and two_songs in the console.
+
+1. Examine the result of joining singers to two_songs.
+2. Add a filter() call to the pipe to remove NA's from the key column of two_songs before calling inner_join().
+
+```{r}
+# Examine the result of joining singers to two_songs
+two_songs %>% inner_join(singers, by = "movie")
+
+# Remove NA's from key before joining
+two_songs %>% 
+  filter(!is.na(movie)) %>% 
+  inner_join(singers, by = "movie")
+```
+
+# A subset of keys
+Often the same column name will be used by two datasets to refer to different things. For example, the data frame movie_studios uses name to refer to the name of a movie studio. movie_years uses name to refer to the name of an actor.
+
+You could join these datasets (they describe the same movies), but you wouldn't want to use the name column to do so!
+
+dplyr will ignore duplicate column names if you set the by argument and do not include the duplicated name in the argument. When you do this, dplyr will treat the columns in the normal fashion, but it will add .x and .y to the duplicated names to help you tell the columns apart.
+
+Instructions
+
+1. Left join movie_studios to movie_years by the movie column. What happens to the duplicated column names?
+
+2. Use rename() to rename the name column of movie_years to artist, and the name column of movie_studios to studio. As an example, rename(data, new_name = old_name) renames old_name to new_name in data.
+
+
+```{r}
+movie_years %>% 
+  # Left join movie_studios to movie_years
+  left_join(movie_studios, by = "movie") %>% 
+  # Rename the columns: artist and studio
+  rename(artist = name.x, studio = name.y)
+```
+
+# Mis-matched key names
+Just as the same name can refer to different things in different datasets, different names can refer to the same thing. For example, elvis_movies and elvis_songs both describe movies starring Elvis Presley, but each uses a different column name to describe the name of the movie.
+
+This type of inconsistency can be frustrating when you wish to join data based on the inconsistently named variable.
+
+To make the join, set by to a named vector. The names of the vector will refer to column names in the primary dataset (x). The values of the vector will correspond to the column names in the secondary dataset (y), e.g.
+
+```{r}
+x %>% left_join(y, by = c("x.name1" = "y.name2"))
+
+```
+
+Instructions
+
+1. Identify the column in elvis_songs that corresponds to a column in elvis_movies.
+
+2. Left join elvis_songs to elvis_movies by this column.
+
+3. Use rename() to give the result the column names movie, year, and song.
+
+
+```{r}
+# Identify the key column
+elvis_songs
+elvis_movies
+
+elvis_movies %>% 
+  # Left join elvis_songs to elvis_movies by this column
+  left_join(elvis_songs, by = c("name" = "movie") ) %>% 
+  # Rename columns
+  rename(movie = name, song=name.y)
+```
+
+# More mismatched names
+Now, you'll practice what you learned in the last exercise.
+
+movie_years and movie_directors both describe movies that feature Frank Sinatra and Bing Crosby. However, each data frame uses different column names to refer to the key variables that connect the datasets.
+
+Can you join the data?
+
+Instructions
+
+1. Identify the key columns that connect movie_directors to movie_years.
+
+2. Left join movie_directors to movie_years.
+
+3. Use select() to arrange the columns in the following order with the following names: year, movie, artist, director, studio.
+
+```{r}
+# Identify the key columns
+movie_directors
+movie_years
+
+movie_years %>% 
+  # Left join movie_directors to movie_years
+  left_join(movie_directors, by = c("movie" = "name")) %>% 
+  # Arrange the columns using select()
+  select(year, movie, artist = name, director, studio)
+```
+
+# Join multiple tables
+purrr's reduce() function is very useful for joining together multiple datasets. Let's practice using it with three new datasets.
+
+supergroups lists the members of several "supergroup" bands, which are bands made from the members of other famous bands. more_bands lists the original band membership of many musicians, including those in supergroups. And more_artists lists the instruments that various artists played.
+
+Can you join these datasets into a single, coherent dataset?
+
+Instructions
+
+1. Load the purrr library.
+
+2. Place supergroups, more_bands, and more_artists into a list, in that order.
+
+3. Use reduce() to join together supergroups, more_bands, and more_artists into a dataset that contains all available information about each artist in supergroups (and no others).
+
+```{r}
+# Load the purrr library
+library(purrr)
+
+# Place supergroups, more_bands, and more_artists into a list
+list(supergroups, more_bands, more_artists) %>% 
+  # Use reduce to join together the contents of the list
+  reduce(left_join,by = c("first","last"))
+
+```
+
+# Filter multiple tables
+Nice work! The job of reduce() is to apply a function in an iterative fashion to many datasets. As a result, reduce() works well with all of the dplyr join functions.
+
+For example, you can use reduce() to filter observations with a filtering join.
+
+Instructions
+
+Use reduce() to return just the rows of more_artists that appear in all three datasets.
+
+```{r}
+list(more_artists, more_bands, supergroups) %>% 
+  # Return rows of more_artists in all three datasets
+  reduce(semi_join, by = c("first","last"))
+
+```
+
+# Base R
+dplyr joins are also similar to the merge() function in base R.
+
+For example, the code in the editor uses merge() and arrange() to perform a left_join() on bands and artists.
+
+Instructions
+
+1. Alter the code to perform the join with a dplyr function.
+
+2. Remove arrange() if your solution does not need it.
+
+```{r}
+# Alter the code to perform the join with a dplyr function
+# merge(bands, artists, by = c("first", "last"), all.x = TRUE) %>%
+#   arrange(band)
+left_join(bands, artists, by = c("first", "last")) %>%
+arrange(band)
+```
+

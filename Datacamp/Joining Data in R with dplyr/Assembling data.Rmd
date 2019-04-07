@@ -1,0 +1,193 @@
+---
+title: "Datacamp_Joining Data in R with dplyr__Assembling data"
+author: "dizhen"
+date: "2019Äê4ÔÂ6ÈÕ"
+output: html_document
+---
+# Which bind?
+side_one and side_two contain tracks from sides one and two, respectively, of Pink Floyd's famous album The Dark Side of the Moon.
+
+Bind these datasets into a single table using a dplyr function. Which type of bind should you use?
+
+Instructions
+
+1. Examine side_one and side_two by printing them to the console.
+
+2. Use a bind to combine side_one and side_two into a single dataset.
+
+```{r}
+# Examine side_one and side_two
+side_one
+side_two
+
+# Bind side_one and side_two into a single dataset
+side_one %>% 
+  bind_rows(side_two)
+```
+
+# Bind rows
+discography and jimi contain all of the information you need to create an anthology dataset for the band The Jimi Hendrix Experience.
+
+discography contains a data frame of each album by The Jimi Hendrix Experience and the year of the album.
+
+jimi contains a list of data frames of album tracks, one for each album released by The Jimi Hendrix Experience. As Garrett explained in the video, you can pass bind_rows() a list of data frames like jimi to bind together into a single data frame.
+
+Instructions
+
+1. Examine discography and jimi.
+
+2. Bind jimi by rows into a single data frame. As you do, save the data frame names as a column named album by specifying the .id argument to bind_rows().
+
+3. Left join discography to the results to make a complete data frame.
+
+```{r}
+# Examine discography and jimi
+discography
+jimi
+
+jimi %>% 
+  # Bind jimi by rows, with ID column "album"
+  bind_rows(.id = 'album') %>% 
+  # Make a complete data frame
+  left_join(discography, by ='album')
+```
+
+
+# Bind columns
+Let's make a compilation of Hank Williams' 67 singles. To do this, you can use hank_years and hank_charts:
+
+hank_years contains the name and release year of each of Hank Williams' 67 singles.
+hank_charts contains the name of each of Hank Williams' 67 singles as well as the highest position it earned on the Billboard sales charts.
+Each dataset contains the same songs, but hank_years is arranged chronologically by year, while hank_charts is arranged alphabetically by song title.
+
+Instructions
+
+1. Examine hank_years and hank_charts. How should you bind the two datasets?
+
+2. Use arrange() to reorder hank_years alphabetically by song title.
+
+3. Select just the year column of the result.
+
+4. Bind the year column to hank_charts.
+
+5. arrange() the resulting dataset chronologically by year, then alphabetically by song title within each year.
+
+```{r}
+# Examine hank_years and hank_charts
+hank_years
+hank_charts
+
+hank_years %>% 
+  # Reorder hank_years alphabetically by song title
+  arrange(song) %>% 
+  # Select just the year column
+  select(year) %>% 
+  # Bind the year column
+  bind_cols(hank_charts) %>% 
+  # Arrange the finished dataset
+  arrange(year,song)
+```
+
+# Make a data frame
+Let's make a Greatest Hits compilation for Hank Williams. hank_year, hank_song, and hank_peak contain the columns of the data frame you made in the last exercise.
+
+Instructions
+
+1. Use data_frame() to combine hank_year, hank_song, and hank_peak into a data frame that has the column names year, song, and peak; in that order.
+
+2. Use filter() to extract just the songs where peak equals 1 (i.e. Hank's number one hits.)
+
+```{r}
+# Make combined data frame using data_frame()
+data_frame(year=hank_year, song=hank_song, peak=hank_peak) %>% 
+# Extract songs where peak equals 1
+  filter(peak == 1)
+```
+
+# Lists of columns
+As a data scientist, you should always be prepared to handle raw data that comes in many different formats.
+
+hank saves Hank Williams' singles in a different way, as a list of vectors. Can you turn hank into the same dataset that you made in the last exercise?
+
+Instructions
+
+1. Examine the contents of hank.
+
+2. Use as_data_frame() to convert the hank list into a data frame.
+
+3. Use filter to extract the number one hits.
+
+```{r}
+# Examine the contents of hank
+hank
+
+# Convert the hank list into a data frame
+as_data_frame(hank) %>% 
+  # Extract songs where peak equals 1
+  filter(peak == 1)
+```
+
+# Lists of rows (data frames)
+michael contains a list of data frames, one for each album released by Michael Jackson. The code in the editor attempts to bind the data frames into a single data frame and then extract a data frame of the top tracks on each album.
+
+However, the code runs into a problem. The commented line fails because as_data_frame() combines a list of column vectors into a data frame. However, michael is a list of data frames.
+
+Can you fix the code? After all, you have seen something like this before.
+
+Instructions
+
+1. Examine the contents of michael.
+
+2. Replace the commented code in the editor with a call to a dplyr function, which should bind the datasets in the list into a single data frame, adding an album column as it does.
+
+```{r}
+# Examine the contents of michael
+michael
+
+# Replace the first line so each album has its own rows
+bind_rows(michael,.id="album") %>% 
+  group_by(album) %>% 
+  mutate(rank = min_rank(peak)) %>% 
+  filter(rank == 1) %>% 
+  select(-rank, -peak)
+```
+
+# Determining type
+Both seventies and eighties list the top selling albums in the US by year (for the 1970s and the 1980s). However, each stores year as a different data type:
+
+seventies stores year as a factor.
+eighties stores year as a character string.
+What will be the class of both$year after you run the code below? (Try to answer before running the code!)
+
+```{r}
+both <- seventies %>% bind_rows(eighties)
+
+```
+Answer:
+A character vector.
+
+# Results
+sixties contains the top selling albums in the US in the 1960s. It stores year as a numeric (double). When you combine it with seventies, which stores year as a factor, bind_rows() returns an error.
+
+You can fix this by coercing seventies$year to a numeric. But if you do it like this, something surprising happens.
+
+```{r}
+seventies %>% 
+  mutate(year = as.numeric(year))
+```
+Can you fix things?
+
+Instructions
+
+1. Coerce seventies$year into a useful numeric.
+2. Bind the updated version of seventies to sixties and examine the results. Make sure they are sensible.
+
+```{r}
+seventies %>% 
+  # Coerce seventies$year into a useful numeric
+  mutate(year = as.numeric(as.character(seventies$year))) %>% 
+  # Bind the updated version of seventies to sixties
+  bind_rows(sixties) %>% 
+  arrange(year)
+```
+
