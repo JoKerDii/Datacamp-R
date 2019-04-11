@@ -1,0 +1,216 @@
+---
+title: "Datacamp_Data Visualization with ggplot2 (Part 2)__Coordinates and Facets"
+author: "dizhen"
+date: "2019Äê4ÔÂ11ÈÕ"
+output: html_document
+---
+# Zooming In
+In the video, you saw different ways of using the coordinates layer to zoom in. In this exercise, we'll compare some of the techniques again.
+
+As usual, you'll be working with the mtcars dataset, which is already cleaned up for you (cyl and am are categorical variables). Also p, a ggplot object you coded in the previous chapter, is already available. Execute p in the console to check it out.
+
+Instructions
+
+Extend p with a scale_x_continuous() with limits = c(3, 6) and expand = c(0, 0). What do you see?
+Try again, this time with coord_cartesian(): Set the xlim argument equal to c(3, 6). Compare the two plots.
+
+```{r}
+# Basic ggplot() command, coded for you
+p <- ggplot(mtcars, aes(x = wt, y = hp, col = am)) + geom_point() + geom_smooth()
+
+# Add scale_x_continuous()
+p + scale_x_continuous(limit = c(3,6),expand = c(0,0))
+
+# Add coord_cartesian(): the proper way to zoom in
+p + scale_x_continuous(limit = c(3,6),expand = c(0,0)) + coord_cartesian(xlim = c(3,6))
+
+```
+# Aspect Ratio
+We can set the aspect ratio of a plot with coord_fixed() or coord_equal(). Both use ratio = 1 as a default. A 1:1 aspect ratio is most appropriate when two continuous variables are on the same scale, as with the iris dataset.
+
+All variables are measured in centimeters, so it only makes sense that one unit on the plot should be the same physical distance on each axis. This gives a more truthful depiction of the relationship between the two variables since the aspect ratio can change the angle of our smoothing line. This would give an erroneous impression of the data.
+
+Of course the underlying linear models don't change, but our perception can be influenced by the angle drawn.
+
+Instructions
+
+1. Complete the basic scatter plot function using the iris data frame to plot Sepal.Width onto the y aesthetic, Sepal.Length onto the x and Species onto col. You should understand all the other functions used in this plot call by now. This is saved in an object called base.plot.
+
+2. Write base.plot on a new line to print it out. Examine it: the plot is drawn to the dimensions of the graphics device.
+
+3. Add a coord_equal() layer to force a 1:1 aspect ratio.
+
+```{r}
+# Complete basic scatter plot function
+base.plot <- ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, col = Species)) +
+               geom_jitter() +
+               geom_smooth(method = "lm", se = FALSE)
+
+# Plot base.plot: default aspect ratio
+base.plot
+
+# Fix aspect ratio (1:1) of base.plot
+base.plot + coord_equal()
+
+```
+# Pie Charts
+The coord_polar() function converts a planar x-y Cartesian plot to polar coordinates. This can be useful if you are producing pie charts.
+
+We can imagine two forms for pie charts - the typical filled circle, or a colored ring.
+
+As an example, consider the stacked bar chart shown in the viewer. Imagine that we just take the y axis on the left and bend it until it loops back on itself, while expanding the right side as we go along. We'd end up with a pie chart - it's simply a bar chart transformed onto a polar coordinate system.
+
+Typical pie charts omit all of the non-data ink, which we'll learn about in the next chapter. Pie charts are not really better than stacked bar charts, but we'll come back to this point in the fourth chapter on best practices.
+
+The mtcars data frame is available, with cyl converted to a factor for you.
+
+Instructions
+
+1. Create a basic stacked bar plot. Since we have univariate data and stat_bin() requires an x aesthetic, we'll have to use a dummy variable. Set x to 1 and map cyl onto fill. Assign the bar plot to wide.bar.
+
+2. Add a coord_polar() layer to wide.bar. Set the argument theta to "y". This specifies the axis which would be transformed to polar coordinates.
+
+3. Repeat the code for the stacked bar plot, but this time:
+
+Set the width argument inside the geom_bar() function to 0.1 and
+
+Use scale_x_continuous() to set the limits argument to c(0.5,1.5)). These two steps will add empty space aroung the bar on the x axis.
+
+Assign this plot to thin.bar.
+
+4. Add a coord_polar() layer to thin.bar, as you did before. There's a ring structure instead of a pie!
+
+```{r}
+# Create a stacked bar plot: wide.bar
+wide.bar <- ggplot(mtcars, aes(x = 1, fill = cyl)) +
+              geom_bar()
+
+# Convert wide.bar to pie chart
+wide.bar +
+  coord_polar(theta = "y")
+
+# Create stacked bar plot: thin.bar
+thin.bar <- ggplot(mtcars, aes(x = 1, fill = cyl)) +
+              geom_bar(width = 0.1) +
+              scale_x_continuous(limits = c(0.5,1.5))
+
+# Convert thin.bar to "ring" type pie chart
+thin.bar + 
+  coord_polar(theta = "y")
+```
+
+# Facets: the basics
+The most straightforward way of using facets is facet_grid(). Here we just need to specify the categorical variable to use on rows and columns using standard R formula notation (rows ~ columns).
+
+Notice that we can also take advantage of ordinal variables by positioning them in the correct order as columns or rows, as is the case with the number of cylinders. Get some hands-on practice in this exercise; ggplot2 is already loaded for you and mtcars is available. The variables cyl and am are factors. However, this is not necessary for facets; ggplot2 will coerce variables to factors in this case.
+
+Instructions
+
+Starting from the basic scatter plot, use facet_grid() and the formula notation to facet the plot in three different ways:
+
+1 - Rows by am.
+2 - Columns by cyl.
+3 - Rows and columns by am and cyl.
+Remember, when faceting in only one direction us . to specify nothing for the unused direction.
+
+```{r}
+# Basic scatter plot
+p <- ggplot(mtcars, aes(x = wt, y = mpg)) +
+  geom_point()
+
+# 1 - Separate rows according to transmission type, am
+p +
+  facet_grid(am ~ .)
+
+# 2 - Separate columns according to cylinders, cyl
+p +
+  facet_grid(. ~ cyl)
+
+# 3 - Separate by both columns and rows 
+p +
+  facet_grid(am ~ cyl)
+
+```
+
+# Many variables
+Facets are another way of presenting categorical variables. Recall that we saw all the ways of combining variables, both categorical and continuous, in the aesthetics chapter. Sometimes it's possible to overdo it. Here we'll present a plot with 6 variables and see if we can add even more.
+
+Let's begin by using a trick to map two variables onto two color scales - hue and lightness. We combine cyl and am into a single variable cyl_am. To accommodate this we also make a new color palette with alternating red and blue of increasing darkness. This is saved as myCol. If you are not familiar with these steps, execute the code piece-by-piece.
+
+Instructions
+
+1 - Beginning with the basic scatter plot:
+
+Add a col aesthetic for cyl_am inside the existing aes() function.
+
+Add a scale_color_manual() layer using the vector myCol for the values argument.
+
+2 - Copy your scatter plot code from the previous instruction.
+
+Add a facet_grid() layer, facetting the plot according to gear on rows and vs on columns (0 is a V-engine and 1 is a straight engine).
+
+Now we have 6 variables in total (4 categorical variables and 2 continuous variables). The plot is still readable, but it's starting to get difficult.
+
+3 - Try to add one more variable, using size. Map disp, the displacement volume from each cylinder, onto the size aesthetic inside the existing aes() function.
+
+```{r}
+# Code to create the cyl_am col and myCol vector
+mtcars$cyl_am <- paste(mtcars$cyl, mtcars$am, sep = "_")
+myCol <- rbind(brewer.pal(9, "Blues")[c(3,6,8)],
+               brewer.pal(9, "Reds")[c(3,6,8)])
+
+# Map cyl_am onto col
+ggplot(mtcars, aes(x = wt, y = mpg, col = cyl_am)) +
+  geom_point() +
+  # Add a manual colour scale
+  scale_color_manual(values = myCol)
+
+# Grid facet on gear vs. vs
+ggplot(mtcars, aes(x = wt, y = mpg, col = cyl_am)) +
+  geom_point() +
+  # Add a manual colour scale
+  scale_color_manual(values = myCol) + facet_grid(gear ~ vs)
+
+# Also map disp to size
+ggplot(mtcars, aes(x = wt, y = mpg, col = cyl_am, size = disp)) +
+  geom_point() +
+  # Add a manual colour scale
+  scale_color_manual(values = myCol) + facet_grid(gear ~ vs)
+
+```
+
+
+# Dropping levels
+When you have a categorical variable with many levels which are not all present in each sub-group of another variable, it may be desirable to drop the unused levels. As an example let's return to the mammalian sleep dataset, mamsleep. It is available in your workspace.
+
+The variables of interest here are name, which contains the full popular name of each animal, and vore, the eating behavior. Each animal can only be classified under one eating habit, so if we facet according to vore, we don't need to repeat the full list in each sub-plot.
+
+Instructions
+
+1. A basic plot, object p, is defined for you. time is mapped onto the x, name onto the y and sleep onto the col aesthetics.
+
+2 .To see the plot execute p.
+
+3. Facet p by rows according to vore. If you look at the resulting plot, you'll notice that there are a lot of lines where no data is available.
+
+4. Extend facet_grid with scale = "free_y" and space = "free_y" to leave out rows for which there is no data.
+
+```{r}
+# Basic scatter plot
+p <- ggplot(mamsleep, aes(x = time, y = name, col = sleep)) +
+  geom_point()
+  
+# Execute to display plot
+p 
+
+# Facet rows accoding to vore
+p +
+  facet_grid(vore ~ .)
+
+# Specify scale and space arguments to free up rows
+p +
+  facet_grid(vore ~ ., scale= "free_y", space = "free_y")
+
+```
+
+
