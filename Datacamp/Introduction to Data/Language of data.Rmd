@@ -1,0 +1,163 @@
+---
+title: "Datacamp_Introduction to Data__Language of data"
+author: "dizhen"
+date: "2019Äê4ÔÂ13ÈÕ"
+output: html_document
+---
+# Loading data into R
+In the previous video, we saw how to load the hsb2 dataset into R using the data() function and how to preview its contents with str().
+
+In this exercise, we'll practice on another dataset, email50, which contains a subset of incoming emails for the first three months of 2012 for a single email account. We'll examine the structure of this dataset and determine the number of rows (observations) and columns (variables).
+
+Instructions
+
+Load the email50 dataset with the data() function.
+View the structure of this dataset with the str() function. How many observations and variables are there?
+
+```{r}
+# Load data
+data(email50)
+
+# View the structure of the data
+str(email50)
+```
+
+# Identify variable types
+Recall from the video that the glimpse() function from dplyr provides a handy alternative to str() for previewing a dataset. In addition to the number of observations and variables, it shows the name and type of each column, along with a neatly printed preview of its values.
+
+Let's have another look at the email50 data, so we can practice identifying variable types.
+
+Instructions
+
+Use the glimpse() function to view the variables in the email50 dataset.
+
+Remember that variable descriptions are available in the help file for the dataset, which we can access by typing ?email50 in the console.
+
+Review the output to identify each variable as either numerical or categorical, and further as discrete or continuous (if numerical) or ordinal or not ordinal (if categorical).
+
+```{r}
+# Glimpse email50
+library(dplyr)
+glimpse(email50)
+```
+# Filtering based on a factor
+Categorical data are often stored as factors in R. In this exercise, we'll practice working with a factor variable, number, from the email50 dataset. This variable tells us what type of number (none, small, or big) an email contains.
+
+Recall from the video that the filter() function from dplyr can be used to filter a dataset to create a subset containing only certain levels of a variable. For example, the following code filters the mtcars dataset for cars containing 6 cylinders:
+
+```{r}
+mtcars %>%
+  filter(cyl == 6)
+```
+Instructions
+
+Create a new dataset called email50_big that is a subset of the original email50 dataset containing only emails with "big" numbers. This information is stored in the number variable.
+Report the dimensions of email50_big using the glimpse() function again. How many emails contain big numbers?
+
+```{r}
+# Subset of emails with big numbers: email50_big
+email50_big <- email50 %>%
+  filter(email50$number == "big")
+
+# Glimpse the subset
+glimpse(email50_big)
+```
+
+# Complete filtering based on a factor
+The droplevels() function removes unused levels of factor variables from our dataset. As we saw in the video, it's often useful to determine which levels are unused (i.e. contain zero values) with the table() function.
+
+In this exercise, we'll see which levels of the number variable are dropped after applying the droplevels() function.
+
+Instructions
+
+Make a table() of the number variable in the email50_big dataset. Which two levels are unused?
+Apply the droplevels() function to the number variable. Assign the result back to email50_big$number.
+Remake the table() of the number variable in the email50_big dataset. How is this output different from the first?
+
+```{r}
+# Table of the number variable
+table(email50_big$number)
+
+# Drop levels
+email50_big$number <- droplevels(email50_big$number)
+
+# Another table of the number variable
+table(email50_big$number)
+```
+
+# Discretize a different variable
+In this exercise, we'll create a categorical version of the num_char variable in the email50 dataset. num_char is the number of characters in an email, in thousands. This new variable will have two levels ("below median" and "at or above median") depending on whether an email has less than the median number of characters or equal to or more than that value.
+
+The median marks the 50th percentile, or midpoint, of a distribution, so half of the emails should fall in one category and the other half in the other. You will learn more about the median and other measures of center in the next course in this series.
+
+Instructions
+
+The email50 dataset is available in your workspace.
+
+Find the median number of characters in emails, save the result as med_num_char.
+Using mutate(), create a new column called num_char_cat, which discretizes the num_char variable into "below median" or "at or above median". Assign the result to email50_fortified.
+Then, using count(), determine the number of emails in each level of num_char_cat. Evaluate whether these counts match the expected numbers.
+
+```{r}
+# Calculate median number of characters: med_num_char
+med_num_char <- median(email50$num_char)
+
+# Create num_char_cat variable in email50
+email50_fortified <- email50 %>%
+  mutate(num_char_cat = ifelse(num_char < med_num_char, "below median", "at or above median"))
+  
+# Count emails in each category
+email50_fortified %>%
+  count(num_char_cat)
+```
+
+# Combining levels of a different factor
+Another common way of creating a new variable based on an existing one is by combining levels of a categorical variable. For example, the email50 dataset has a categorical variable called number with levels "none", "small", and "big", but suppose we're only interested in whether an email contains a number. In this exercise, we will create a variable containing this information and also visualize it.
+
+For now, do your best to understand the code we've provided to generate the plot. We will go through it in detail in the next video.
+
+Instructions
+
+Create a new column in email50 called number_yn that is "no" if there is no number in the email and "yes" otherwise. Use case_when() for this. Assign this to email50_fortified.
+Run the code provided to visualize the distribution of the number_yn variable.
+
+```{r}
+# Create number_yn column in email50
+email50_fortified <- email50 %>%
+  mutate(
+    number_yn = case_when(
+      # if number is "none", make number_yn "no"
+      number == "none" ~ "no", 
+      # if number is not "none", make number_yn "yes"
+      number != "none" ~ "yes"  
+    )
+  )
+  
+
+# Visualize the distribution of number_yn
+ggplot(email50_fortified, aes(x = number_yn)) +
+  geom_bar()
+```
+
+# Visualizing numerical and categorical data
+In this exercise, we'll visualize the relationship between two numerical variables from the email50 dataset, conditioned on whether or not the email was spam. This means that we will use an aspect of the plot (like color or shape) to identify the levels in the spam variable so that we can compare plotted values between them.
+
+Recall that in the ggplot() function, the first argument is the dataset, then we map the aesthetic features of the plot to variables in the dataset, and finally the geom_*() layer informs how data are represented on the plot. In this exercise, we will make a scatterplot by adding a geom_point() layer to the ggplot() call.
+
+Instructions
+
+Create a scatterplot of number of exclamation points (exclaim_mess) on the y-axis vs. number of characters (num_char) on the x-axis.
+
+Color points by whether or not the email is spam.
+Note that the spam variable is stored as numerical (0/1) but we want to use it as a categorical variable in this plot. To do this, force R to think of it as such with the factor() function.
+Based on the plot, does there appear to be a relationship between these variables?
+
+```{r}
+# Load ggplot2
+library(ggplot2)
+
+# Scatterplot of exclaim_mess vs. num_char
+ggplot(email50, aes(x = num_char, y = exclaim_mess, color = factor(spam))) +
+  geom_point()
+```
+

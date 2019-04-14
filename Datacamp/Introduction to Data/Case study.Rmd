@@ -1,0 +1,82 @@
+---
+title: "Datacamp_Introduction to Data__case study"
+author: "dizhen"
+date: "2019Äê4ÔÂ14ÈÕ"
+output: html_document
+---
+# Identify variable types
+It's always useful to start your exploration of a dataset by identifying variable types. The results from this exercise will help you design appropriate visualizations and calculate useful summary statistics later in your analysis.
+
+Instructions
+
+Explore the evals data once again with the following goals in mind: (1) Identify each variable as numerical or categorical. (2) If numerical, determine if it is discrete or continuous. (3) If categorical, determine if it is ordinal or not.
+We've created a vector of variable names in the editor called cat_vars. To test your understanding of the data, remove the names of any variables that are not categorical.
+
+```{r}
+# Inspect variable types
+str(evals) 
+glimpse(evals)
+
+# Remove non-factor variables from the vector below
+cat_vars <- c("rank", "ethnicity", "gender", "language", "cls_level", "cls_profs", "cls_credits", "pic_outfit", "pic_color")
+```
+
+# Recode a variable
+The cls_students variable in evals tells you the number of students in the class. Suppose instead of the exact number of students, you're interested in whether the class is
+
+"small" (18 students or fewer),
+"midsize" (19 - 59 students), or
+"large" (60 students or more).
+
+Instructions
+
+Recode the cls_students variable into a new variable, cls_type, using case_when(). This new variable should have three levels as described above. Save the resulting data frame (with the new variable) as evals.
+What type of variable is cls_type?
+
+```{r}
+x = case_when(
+    [condition 1] ~ [value of x when condition 1 is true],
+    [condition 2] ~ [value of x when condition 2 is true],
+    [condition 3] ~ [value of x when condition 3 is true]
+)
+```
+
+```{r}
+# Recode cls_students as cls_type
+evals_fortified <- evals %>%
+  mutate(
+    cls_type = case_when(
+      cls_students <= 18                      ~ "small",
+      cls_students >= 19 & cls_students <= 59 ~ "midsize",
+      cls_students >= 60                      ~ "large"
+    )
+  )
+```
+# Create a scatterplot
+The bty_avg variable shows the average beauty rating of the professor by the six students who were asked to rate the attractiveness of these faculty. The score variable shows the average professor evaluation score, with 1 being very unsatisfactory and 5 being excellent.
+
+Instruction
+
+Use ggplot() to create a scatterplot displaying the relationship between these two variables.
+How would you describe the relationship apparent in this visualization?
+
+```{r}
+# Scatterplot of score vs. bty_avg
+ggplot(evals, aes(x = bty_avg, y = score)) +
+  geom_point()
+```
+
+# Create a scatterplot, with an added layer
+Suppose you are interested in evaluating how the relationship between a professor's attractiveness and their evaluation score varies across different class types (small, midsize, and large).
+
+Instructions
+
+Recreate your visualization from the previous exercise, but this time coloring the points by class type.
+How would you describe the relationship apparent in this visualization?
+
+```{r}
+# Scatterplot of score vs. bty_avg colored by cls_type
+ggplot(evals, aes(x = bty_avg, y = score, color = cls_type))+
+  geom_point()
+```
+

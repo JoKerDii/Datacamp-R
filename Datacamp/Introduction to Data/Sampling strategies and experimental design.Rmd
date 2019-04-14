@@ -1,0 +1,47 @@
+---
+title: "Datacamp_Introduction to Data__Sampling strategies and experimental design"
+author: "dizhen"
+date: "2019Äê4ÔÂ14ÈÕ"
+output: html_document
+---
+
+# Simple random sample in R
+Suppose we want to collect some data from a sample of eight states. A list of all states and the region they belong to (Northeast, Midwest, South, West) are given in the us_regions data frame.
+
+Instruction:
+
+The dplyr package and us_regions data frame have been loaded.
+
+Use simple random sampling to select eight states from us_regions. Save this sample in a data frame called states_srs.
+Count the number of states from each region in your sample.
+
+```{r}
+# Simple random sample: states_srs
+states_srs <- us_regions %>%
+  sample_n(8)
+
+# Count states by region
+states_srs %>%
+  count(region)
+```
+# Stratified sample in R
+In the previous exercise, we took a simple random sample of eight states. However, we did not have any control over how many states from each region got sampled. The goal of stratified sampling in this context is to have control over the number of states sampled from each region. Our goal for this exercise is to sample an equal number of states from each region.
+
+Instructions
+
+The dplyr package has been loaded and us_regions is still available in your workspace.
+
+Use stratified sampling to select a total of eight states, where each stratum is a region. Save this sample in a data frame called states_str.
+Count the number of states from each region in your sample to confirm that each region is represented equally in your sample.
+
+```{r}
+# Stratified sample
+states_str <- us_regions %>%
+  group_by(region) %>%
+  sample_n(2)
+
+# Count states by region
+states_str %>%
+  count(region)
+```
+

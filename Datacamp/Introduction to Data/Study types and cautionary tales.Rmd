@@ -1,0 +1,109 @@
+---
+title: "Datacamp_Introduction to Data__Study types and cautionary tales"
+author: "dizhen"
+date: "2019Äê4ÔÂ13ÈÕ"
+output: html_document
+---
+# Identify type of study: Countries
+Next, let's take a look at data from a different study on country characteristics. First, load the data and view it, then identify the type of study. Remember, an experiment requires random assignment.
+
+Instructions
+
+Load the gapminder data. This dataset comes from the gapminder R package, which has already been loaded.
+View the variables in the dataset with glimpse().
+If these data come from an observational study, assign "observational" to the type_of_study variable. If experimental, assign "experimental".
+
+```{r}
+# Load data
+data(gapminder)
+
+# Glimpse data
+glimpse(gapminder)
+
+# Identify type of study: observational or experimental
+type_of_study <- "observational"
+```
+
+# Number of males and females admitted
+The goal of this exercise is to determine the numbers of male and female applicants who got admitted and rejected. Specifically, we want to find out how many males are admitted and how many are rejected. And similarly we want to find how many females are admitted and how many are rejected.
+
+To do so we will use the count() function from the dplyr package.
+
+In one step, count() groups the data and then tallies the number of observations in each level of the grouping variable. These counts are available under a new variable called n.
+
+Instructions
+
+Pass the gender and admission status columns to count() on the ucb_admit dataset (which is already pre-loaded) to count how many of each gender are admitted and how many are rejected.
+
+```{r}
+# Load packages
+library(dplyr)
+
+# Count number of male and female applicants admitted
+ucb_admit%>%
+  count(Gender, Admit)
+```
+
+# Proportion of males admitted overall
+Next we'll calculate the percentage of males and percentage of females admitted, by creating a new variable, called prop (short for proportion) based off of the counts calculated in the previous exercise and using the mutate() from the dplyr package.
+
+Proportions for each row of the data frame we created in the previous exercise can be calculated as n / sum(n). Note that since the data are grouped by gender, sum(n) will be calculated for males and females separately.
+
+Instructions
+
+The table of counts of gender and admission status you developed earlier is available as ucb_admission_counts.
+
+Group the data by gender.
+Create the new variable described above, prop, the proportion of males and females admitted.
+Filter the data for those who are admitted so that the resulting data frame only contains proportions of males and females who are admitted.
+Which gender has a higher admission rate, male or female?
+
+```{r}
+ucb_admission_counts %>%
+  # Group by gender
+  group_by(Gender) %>%
+  # Create new variable
+  mutate(prop = n / sum(n)) %>%
+  # Filter for admitted
+  filter(Admit == "Admitted")
+  
+  str(ucb_admit)
+```
+
+
+# Proportion of males admitted for each department
+Finally we'll make a table similar to the one we constructed earlier, except we'll first group the data by department. The goal is to compare the proportions of male admitted students across departments.
+
+Proportions for each row of the data frame we create can be calculated as n / sum(n). Note that since the data are grouped by department and gender, sum(n) will be calculated for males and females separately for each department.
+
+Instructions 1/2
+
+ucb_admit has been pre-loaded for you.
+
+Assign ucb_admission_counts as the count() of ucb_admit by department, gender, and admission status.
+```{r}
+ucb_admission_counts <- ucb_admit %>%
+  # Counts by department, then gender, then admission status
+  count(Dept, Gender, Admit)
+
+# See the result
+ucb_admission_counts
+```
+
+Instructions 2/2
+
+Group ucb_admission_counts by department then gender.
+Add a new column, prop, which is the ratio of those admitted or rejected by department and gender.
+Filter the rows for males and for those who are admitted.
+
+```{r}
+ucb_admission_counts  %>%
+  # Group by department, then gender
+  group_by(Dept, Gender) %>%
+  # Create new variable
+  mutate(prop = n/sum(n)) %>%
+  # Filter for male and admitted
+  filter(Gender == "Male", Admit == "Admitted")
+  
+```
+
