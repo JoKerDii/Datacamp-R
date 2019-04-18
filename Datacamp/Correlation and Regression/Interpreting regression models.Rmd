@@ -1,0 +1,142 @@
+---
+title: "Datacamp_Correlation and Regression__Interpreting regression models"
+author: "dizhen"
+date: "2019Äê4ÔÂ18ÈÕ"
+output: html_document
+---
+# Fitting simple linear models
+While the geom_smooth(method = "lm") function is useful for drawing linear models on a scatterplot, it doesn't actually return the characteristics of the model. As suggested by that syntax, however, the function that creates linear models is lm(). This function generally takes two arguments:
+
+A formula that specifies the model
+A data argument for the data frame that contains the data you want to use to fit the model
+The lm() function return a model object having class "lm". This object contains lots of information about your regression model, including the data used to fit the model, the specification of the model, the fitted values and residuals, etc.
+
+Instructions
+
+Using the bdims dataset, create a linear model for the weight of people as a function of their height.
+Using the mlbBat10 dataset, create a linear model for SLG as a function of OBP.
+Using the mammals dataset, create a linear model for the body weight of mammals as a function of their brain weight, after taking the natural log of both variables.
+
+```{r}
+# Linear model for weight as a function of height
+lm(wgt ~ hgt, data = bdims)
+
+# Linear model for SLG as a function of OBP
+lm(SLG ~ OBP, data = mlbBat10)
+
+# Log-linear model for body weight as a function of brain weight
+lm(log(BodyWt) ~ log(BrainWt), data = mammals)
+
+```
+# The lm summary output
+An "lm" object contains a host of information about the regression model that you fit. There are various ways of extracting different pieces of information.
+
+The coef() function displays only the values of the coefficients. Conversely, the summary() function displays not only that information, but a bunch of other information, including the associated standard error and p-value for each coefficient, the R2, adjusted R2, and the residual standard error. The summary of an "lm" object in R is very similar to the output you would see in other statistical computing environments (e.g. Stata, SPSS, etc.)
+
+Instructions
+
+We have already created the mod object, a linear model for the weight of individuals as a function of their height, using the bdims dataset and the code
+```{r}
+mod <- lm(wgt ~ hgt, data = bdims)
+```
+Now, you will:
+
+Use coef() to display the coefficients of mod.
+Use summary() to display the full regression output of mod.
+
+```{r}
+# Show the coefficients
+coef(mod)
+
+# Show the full output
+summary(mod)
+```
+# Fitted values and residuals
+Once you have fit a regression model, you are often interested in the fitted values (y^i) and the residuals (ei), where i indexes the observations. Recall that:
+
+ei=yi???y^i
+
+The least squares fitting procedure guarantees that the mean of the residuals is zero (n.b., numerical instability may result in the computed values not being exactly zero). At the same time, the mean of the fitted values must equal the mean of the response variable.
+
+In this exercise, we will confirm these two mathematical facts by accessing the fitted values and residuals with the fitted.values() and residuals() functions, respectively, for the following model:
+
+```{r}
+mod <- lm(wgt ~ hgt, data = bdims)
+
+```
+Instructions
+
+mod (defined above) is available in your workspace.
+
+Confirm that the mean of the body weights equals the mean of the fitted values of mod.
+Compute the mean of the residuals of mod.
+
+```{r}
+# Mean of weights equal to mean of fitted values?
+mean(bdims$wgt) == mean(fitted.values(mod))
+
+# Mean of the residuals
+mean(residuals(mod))
+```
+
+# Tidying your linear model
+As you fit a regression model, there are some quantities (e.g. R2) that apply to the model as a whole, while others apply to each observation (e.g. y^i). If there are several of these per-observation quantities, it is sometimes convenient to attach them to the original data as new variables.
+
+The augment() function from the broom package does exactly this. It takes a model object as an argument and returns a data frame that contains the data on which the model was fit, along with several quantities specific to the regression model, including the fitted values, residuals, leverage scores, and standardized residuals.
+
+Instructions
+
+The same linear model from the last exercise, mod, is available in your workspace.
+
+Load the broom package.
+Create a new data frame called bdims_tidy that is the augmentation of the mod linear model.
+View the bdims_tidy data frame using glimpse().
+
+
+```{r}
+# Load broom
+library(broom)
+
+# Create bdims_tidy
+bdims_tidy <- augment(mod)
+
+# Glimpse the resulting data frame
+glimpse(bdims_tidy)
+```
+# Making predictions
+The fitted.values() function or the augment()-ed data frame provides us with the fitted values for the observations that were in the original data. However, once we have fit the model, we may want to compute expected values for observations that were not present in the data on which the model was fit. These types of predictions are called out-of-sample.
+
+The ben data frame contains a height and weight observation for one person. The mod object contains the fitted model for weight as a function of height for the observations in the bdims dataset. We can use the predict() function to generate expected values for the weight of new individuals. We must pass the data frame of new observations through the newdata argument.
+
+Instructions
+
+The same linear model, mod, is defined in your workspace.
+
+Print ben to the console.
+Use predict() with the newdata argument to compute the expected height of the individual in the ben data frame.
+
+```{r}
+# Print ben
+ben
+
+# Predict the weight of ben
+predict(mod, newdata = ben)
+```
+# Adding a regression line to a plot manually
+The geom_smooth() function makes it easy to add a simple linear regression line to a scatterplot of the corresponding variables. And in fact, there are more complicated regression models that can be visualized in the data space with geom_smooth(). However, there may still be times when we will want to add regression lines to our scatterplot manually. To do this, we will use the geom_abline() function, which takes slope and intercept arguments. Naturally, we have to compute those values ahead of time, but we already saw how to do this (e.g. using coef()).
+
+The coefs data frame contains the model estimates retrieved from coef(). Passing this to geom_abline() as the data argument will enable you to draw a straight line on your scatterplot.
+
+Instructions
+
+Use geom_abline() to add a line defined in the coefs data frame to a scatterplot of weight vs. height for individuals in the bdims dataset.
+
+```{r}
+# Add the line to the scatterplot
+ggplot(data = bdims, aes(x = hgt, y = wgt)) + 
+  geom_point() + 
+  geom_abline(data = coefs, 
+              aes(intercept = `(Intercept)`, slope = hgt),  
+              color = "dodgerblue")
+```
+

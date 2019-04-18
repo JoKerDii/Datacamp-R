@@ -1,0 +1,95 @@
+---
+title: "Datacamp_Correlation and Regression__Simple linear regression"
+author: "dizhen"
+date: "2019定4埖17晩"
+output: html_document
+---
+# The "best fit" line
+The simple linear regression model for a numeric response as a function of a numeric explanatory variable can be visualized on the corresponding scatterplot by a straight line. This is a "best fit" line that cuts through the data in a way that minimizes the distance between the line and the data points.
+
+We might consider linear regression to be a specific example of a larger class of smooth models. The geom_smooth() function allows you to draw such models over a scatterplot of the data itself. This technique is known as visualizing the model in the data space. The method argument to geom_smooth() allows you to specify what class of smooth model you want to see. Since we are exploring linear models, we'll set this argument to the value "lm".
+
+Note that geom_smooth() also takes an se argument that controls the standard error, which we will ignore for now.
+
+Instructions
+
+Create a scatterplot of body weight as a function of height for all individuals in the bdims dataset with a simple linear model plotted over the data.
+
+```{r}
+# Scatterplot with regression line
+ggplot(data = bdims, aes(x = hgt, y = wgt)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+# Uniqueness of least squares regression line
+The least squares criterion implies that the slope of the regression line is unique. In practice, the slope is computed by R. In this exercise, you will experiment with trying to find the optimal value for the regression slope for weight as a function of height in the bdims dataset via trial-and-error.
+
+To help, we've built a custom function for you called add_line(), which takes a single argument: the proposed slope coefficient.
+
+Instructions
+
+The bdims dataset is available in your workspace. Experiment with different values (to the nearest integer) of the my_slope parameter until you find one that you think fits best.
+
+```{r}
+# Estimate optimal value of my_slope
+add_line(my_slope = 1)
+```
+
+
+# Fitting a linear model "by hand"
+Recall the simple linear regression model:
+Y=b0+b1???X
+Two facts enable you to compute the slope b1 and intercept b0 of a simple linear regression model from some basic summary statistics.
+
+First, the slope can be defined as:
+
+b1=rX,Y???sYsX
+where rX,Y represents the correlation (cor()) of X and Y and sX and sY represent the standard deviation (sd()) of X and Y, respectively.
+
+Second, the point (x．,y．) is always on the least squares regression line, where x． and y． denote the average of x and y, respectively.
+
+The bdims_summary data frame contains all of the information you need to compute the slope and intercept of the least squares regression line for body weight (Y) as a function of height (X). You might need to do some algebra to solve for b0!
+
+Instructions
+
+Print the bdims_summary data frame.
+Use mutate() to add the slope and intercept to the bdims_summary data frame.
+
+```{r}
+# Print bdims_summary
+bdims_summary
+
+# Add slope and intercept
+bdims_summary %>%
+  mutate(slope = r * sd_wgt / sd_hgt, 
+         intercept = mean_wgt - slope * mean_hgt)
+```
+# Regression to the mean
+Regression to the mean is a concept attributed to Sir Francis Galton. The basic idea is that extreme random observations will tend to be less extreme upon a second trial. This is simply due to chance alone. While "regression to the mean" and "linear regression" are not the same thing, we will examine them together in this exercise.
+
+One way to see the effects of regression to the mean is to compare the heights of parents to their children's heights. While it is true that tall mothers and fathers tend to have tall children, those children tend to be less tall than their parents, relative to average. That is, fathers who are 3 inches taller than the average father tend to have children who may be taller than average, but by less than 3 inches.
+
+The Galton_men and Galton_women datasets contain data originally collected by Galton himself in the 1880s on the heights of men and women, respectively, along with their parents' heights.
+
+Compare the slope of the regression line to the slope of the diagonal line. What does this tell you?
+
+Instructions
+
+Create a scatterplot of the height of men as a function of their father's height. Add the simple linear regression line and a diagonal line (with slope equal to 1 and intercept equal to 0) to the plot.
+Create a scatterplot of the height of women as a function of their mother's height. Add the simple linear regression line and a diagonal line to the plot.
+
+```{r}
+# Height of children vs. height of father
+ggplot(data = Galton_men, aes(x = father, y = height)) +
+  geom_point() + 
+  geom_abline(slope = 1, intercept = 0) + 
+  geom_smooth(method = "lm", se = FALSE)
+
+# Height of children vs. height of mother
+ggplot(data = Galton_women, aes(x = mother, y = height)) +
+  geom_point() + 
+  geom_abline(slope = 1, intercept = 0) + 
+  geom_smooth(method = "lm", se = FALSE)
+```
+
