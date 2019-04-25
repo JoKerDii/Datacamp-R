@@ -1,0 +1,213 @@
+---
+title: "Datacamp_Visualization Best Practices in R__Proportions of a whole"
+author: "dizhen"
+date: "2019Äê4ÔÂ25ÈÕ"
+output: html_document
+---
+# Familiarizing with disease data
+The dataset containing disease cases from the World Health Organization (WHO) is loaded into your environment as the dataframe who_disease.
+
+In order to familiarize yourself with the data, let's start by printing it to the console.
+
+Once you've investigated it a bit, make a simple bar chart of the number of observations by region using the supplied code. You will need to fill in the aes()thetics function to map the x-axis to the proper column name.
+
+Instructions
+
+Print dataframe by simply calling the it: who_disease.
+Modify ggplot code so aes() contains the region as its x-axis mapping.
+
+```{r}
+# print dataframe to inspect
+who_disease
+
+# set x aesthetic to region column
+ggplot(who_disease, aes(x = region)) +
+  geom_bar()
+```
+
+# Warming up data-wrangling
+Let's warm up your tidyverse data wrangling skills a bit and look at the number of cases reported by year for the American region ('AMR').
+
+To do this, we will first filter the dataset to our desired region, then make a simple scatter plot of the year by cases.
+
+In addition, set the opacity of the points to 50% (0.5) so we can get a sense of data overlap.
+
+Instructions
+
+Filter who_disease so we just only keep data from the 'AMR' region.
+Modify the aesthetics in the data to map the year to the x-axis, and cases to the y-axis.
+Lower the opacity (alpha) of the points to 0.5 to get a sense of overlap in geom_point()
+
+```{r}
+
+# filter data to AMR region. 
+amr_region <- who_disease %>%
+    filter(region == "AMR")
+
+# map x to year and y to cases. 
+ggplot(amr_region, aes(x = year, y = cases)) + 
+	# lower alpha to 0.5 to see overlap.   
+  	geom_point(alpha = 0.5)
+```
+
+# The infamous P-I-E
+Intuitively, you can think about a pie chart as a stacked bar chart that has been 'wrapped' around some central axis. Conveniently, this intuition fits very well with how they are made in ggplot2.
+
+Supplied is code to summarize our who_disease data into a dataframe containing three diseases: measles, mumps, and,other, along with their total number of cases in the data.
+
+Your job is to turn the empty ggplot object into a stacked bar-chart, then into a pie-chart by using the transform coord_polar(theta = 'y').
+
+Notice how I have set x = 1 in the aesthetics. This is because we only want one bar chart here. We'll learn about multiple stacked bar charts in the next lesson!
+
+
+Instructions
+
+Add a column geometry (geom_col()) to the supplied ggplot object.
+Switch to polar coordinates by adding coord_polar()
+
+```{r}
+# Wrangle data into form we want. 
+disease_counts <- who_disease %>%
+	mutate(disease = ifelse(disease %in% c('measles', 'mumps'), disease, 'other')) %>%
+	group_by(disease) %>%
+	summarise(total_cases = sum(cases))
+
+ggplot(disease_counts, aes(x = 1, y = total_cases, fill = disease)) +
+	# Use a column geometry.
+	geom_col() 
+	# Change coordinate system to polar and set theta to 'y'.
+	coord_polar(theta = "y")
+```
+
+# Cleaning up the pie
+The pie chart you made in the last plot is good, but it's a little cluttered. Let's clean it up using the ggplot function theme_void() along with giving it a meaningful title with ggtitle(...).
+
+The disease_counts summarized dataframe from the last exercise is already loaded for you.
+
+Instructions
+
+Add theme_void() to the ggplot object to clean up the background.
+Give the plot the title 'Proportion of diseases'.
+
+```{r}
+
+ggplot(disease_counts, aes(x = 1, y = total_cases, fill = disease)) +
+	# Use a column geometry.
+	geom_col() +
+	# Change coordinate system to polar.
+	coord_polar(theta = "y") +
+	# Clean up the background with theme_void and give it a proper title with ggtitle.
+	theme_void() +
+	ggtitle("Proportion of diseases")
+```
+
+# How about a waffle?
+What if we are interested in the details of the 'other' class?
+
+Let's make the switch to a waffle chart, as they are capable of dealing with more classes. We'll use the same data-manipulation pipeline from the last exercise, but this time with all the diseases left in.
+
+We will use the library waffle which contains the function waffle(). This function produces a waffle chart for you when supplied with a named vector of counts.
+
+It will draw one square for each unit supplied in the vector, so we need to manipulate our disease counts to rounded percents (note the mutate() call in the supplied data wrangling code).
+
+
+Instructions
+
+Give the case_counts vector names using the names() function.
+Call the waffle() function in the library waffle with the case_counts vector supplied as an argument.
+
+```{r}
+
+disease_counts <- who_disease %>%
+group_by(disease) %>%
+	summarise(total_cases = sum(cases)) %>% 
+	mutate(percent = round(total_cases/sum(total_cases)*100))
+
+# Create an array of rounded percentages for diseases.
+case_counts <- disease_counts$percent
+# Name the percentage array with disease_counts$disease
+names(case_counts) <- disease_counts$disease
+
+# Pass case_counts vector to the waffle function to plot
+waffle(case_counts)
+```
+
+
+# Basic stacked bars
+When we made the pie and waffle charts in the last exercises, we looked at all years in the data combined together.
+
+Now, we're interested in looking at these patterns over time. To do this we will make a stacked bar chart with the x-axis being the year of observation. Like we did with the pie chart before, we will simplify the data to just be measles, mumps, and other.
+
+Do you notice anything funky in the data after visualizing it this way?
+
+Instructions
+
+Modify the aes() call to include the year mapped to the x-axis.
+Make bars fill the entire y-axis by adjusting position argument in geom_col().
+
+```{r}
+disease_counts <- who_disease %>%
+	mutate(disease = ifelse(disease %in% c('measles', 'mumps'), disease, 'other')) %>%
+	group_by(disease, year) %>% # note the addition of year to the grouping.
+	summarise(total_cases = sum(cases))
+
+# add the mapping of year to the x axis. 
+ggplot(disease_counts, aes(x = year, y = total_cases, fill = disease)) +
+	# Change the position argument to make bars full height
+	geom_col(position = "fill")
+```
+
+# Ordering stack for readability
+In the last plot since we grouped all diseases that are not measles and mumps into their own category, it's fair to assume that we care less about the 'other' category's trajectory than those of measles and mumps.
+
+Because of this, the plot we made has a problem. The way that the bars are stacked, with measles on top, mumps in the middle, and other on the bottom, makes it hard to get a good intuition for the behavior of mumps over time because its baseline is non-constant due to changing values in measles proportions.
+
+Ggplot orders the bars and legend based upon the order it sees the variables in the dataset. To override this, turn the disease column into a factor with the levels in the order we want our plot to use.
+
+Instructions
+
+Change the mutate function in the data-manipulation pipeline to turn disease into a factor with levels = c('measles', 'other', 'mumps').
+Re-plot using the same code as the last exercise.
+
+```{r}
+
+disease_counts <- who_disease %>%
+	mutate(
+		disease = ifelse(disease %in% c('measles', 'mumps'), disease, 'other') %>% 
+		factor(levels = c('measles', 'other', 'mumps')) # change factor levels to desired ordering
+	) %>%
+	group_by(disease, year) %>%
+	summarise(total_cases = sum(cases)) 
+
+# plot
+ggplot(disease_counts, aes(x = year, y = total_cases, fill = disease)) +
+	geom_col(position = 'fill')
+```
+
+# Categorical x-axis
+In the previous charts, we saw that mumps didn't start getting reported until 1999, making comparisons before then meaningless.
+
+Let's filter the data to be only the cases reported on or after 1999 and then make a stacked bar chart looking at the proportion of different diseases by region.
+
+Modify the data-manipulation pipeline to get the data into the form you want, then build your stacked bar chart and plot! Don't worry about ordering the bars here as we did in the last exercise. See any surprising patterns?
+
+Instructions
+
+Filter who_disease data to only years 1999 and later.
+Add to group_by() to keep region information in summary.
+Fill out aesthetics with x = region, y = total_cases, and fill = disease.
+
+```{r}
+disease_counts <- who_disease %>%
+	# Filter to on or later than 1999
+	filter(year >= 1999) %>% 
+	mutate(disease = ifelse(disease %in% c('measles', 'mumps'), disease, 'other')) %>%
+	group_by(disease, region) %>%    # Add region column to grouping
+	summarise(total_cases = sum(cases))
+
+# Set aesthetics so disease is the stacking variable, region is the x-axis and counts are the y
+ggplot(disease_counts, aes(x = region, y = total_cases, fill = disease)) +
+	# Add a column geometry with the proper position value.
+	geom_col(position = "fill")
+```
+
