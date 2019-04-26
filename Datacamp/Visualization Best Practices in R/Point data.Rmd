@@ -1,0 +1,252 @@
+---
+title: "Datacamp_Visualization Best Practices in R__Point data"
+author: "dizhen"
+date: "2019Äê4ÔÂ26ÈÕ"
+output: html_document
+---
+# Working with geom_col
+In ggplot, there are two different ways to make bar plots: geom_col() and geom_bar().
+
+If your data is in the form where the height of the bar is encoded in a column that you want to map to the y-axis, like counts of diseases are in our data, you want to use the geom_col() option.
+
+Let's make a barplot of the number of cases recorded by disease for India in 1980 using geom_col().
+
+Instructions
+
+filter() the data to the country of India and the year 1980 with country == "India", year == 1980.
+Map disease to the x-axis and cases to the y-axis in the aes() call.
+Add a geom_col() geometry.
+
+```{r}
+# library(dplyr)
+
+who_disease %>% 
+	# filter to india in 1980
+	filter(country == "India", year == 1980) %>% 
+	# map x aesthetic to disease and y to cases
+	ggplot(aes(x = disease, y = cases)) +
+	# use geom_col to draw
+  geom_col()
+```
+
+# Wrangling geom_bar
+Whereas geom_col() expects you to pass it a y-axis mapping column, geom_bar() doesn't take a y-axis call (at least by default).
+
+Instead, geom_bar() takes your x-axis mapping and counts every single observation (or row of the passed dataframe) for each class and then draws bars of corresponding heights
+
+These two code chunks will give you the same plot:
+
+```{r}
+# geom_col()
+data %>%
+  groupby(xAxisCol) %>%
+  summarize(value = n()) %>%
+  ggplot(aes(x = xAxisCol, y = value) + 
+  geom_col()
+
+# geom_bar()
+data %>%
+  ggplot(aes(x = xAxisCol)) +
+  geom_bar()
+```
+
+Let's use geom_bar() to make a look at observations with a large number of cases by region our WHO data.
+
+Instructions
+
+filter() the who_disease data into only observations (rows) with greater than 1000 cases.
+Map the x-axis to the region column.
+Add geom_bar() to the plot object to draw the bars.
+
+```{r}
+
+who_disease %>%
+	# filter data to observations of greater than 1,000 cases
+	filter(cases > 1000) %>%
+	# map the x-axis to the region column
+	ggplot(aes(x = region)) +
+	# add a geom_bar call
+	geom_bar()
+```
+
+# Ordered point chart
+Let's start by improving the point plot we saw in the slides.
+
+First, change the data manipulation pipeline to filter to the years 1992 and 2002 instead of the default 2006-2016. Note that the array interestingCountries has been loaded and is the same as in the slides.
+
+Now modify the plotting code to plot the new data, but this time, let's reorder the y-axis in descending order of cases for 1992.
+
+
+Instructions
+
+Modify filter() to pull the years 1992 and 2002.
+
+Modify Aesthetics to:
+
+Plot the cases for 1992 by country.
+reorder() y-axis by the number of cases.
+
+```{r}
+# without order
+
+who_subset <- who_disease %>% 
+	filter(
+		countryCode %in% interestingCountries,
+		disease == 'measles',
+		year %in% c(1992, 2002) # Modify years to 1992 and 2002
+	) %>% 
+	mutate(year = paste0('cases_', year)) %>% 
+	spread(year, cases)
+ 
+# Reorder y axis and change the cases year to 1992
+ggplot(who_subset, aes(x = log10(cases_1992), y = country)) +
+	geom_point()
+```
+
+```{r}
+# ordered
+
+who_subset <- who_disease %>% 
+	filter(
+		countryCode %in% interestingCountries,
+		disease == 'measles',
+		year %in% c(1992, 2002) # Modify years to 1992 and 2002
+	) %>% 
+	mutate(year = paste0('cases_', year)) %>% 
+	spread(year, cases)
+ 
+# Reorder y axis and change the cases year to 1992
+ggplot(who_subset, aes(x = log10(cases_1992), y = reorder(country, cases_1992))) +
+	geom_point()
+```
+
+# Adding visual anchors
+A nice property of the log fold change is it is symmetric: a value of 1 means two times 'bigger', and -1 means two times 'smaller.' Due to this, the position of 0 on the x-axis marks the switch point between count declines and increases over years. When your data has a natural break-point like this, it is good if the chart shows it as a focal-point as well.
+
+The code provided will make a basic point chart of the log fold change for the dates. To improve it, we will do two things. First, reorder the dots in descending order like in the previous exercise. Second, add a guideline at x = 0 to show the neutral point by adding geom_vline() (for verticalline) to your plot object with the argument xintercept set to 0.
+
+Instructions
+
+Order dots in descending by wrapping the y mapping in reorder().
+Add visual anchor at x = 0 with geom_vline().
+
+```{r}
+
+who_subset %>% 
+	# calculate the log fold change between 2016 and 2006
+	mutate(logFoldChange = log2(cases_2002/cases_1992)) %>% 
+	# set y axis as country ordered with respect to logFoldChange
+	ggplot(aes(x = logFoldChange, y = reorder(country, logFoldChange))) +
+	geom_point() +
+	# add a visual anchor at x = 0
+	geom_vline(xintercept =  0)
+```
+
+# Faceting to show structure.
+Taking the code from the last exercise, let's modify it to group the countries by their region by faceting.
+
+This will help inject a bit more structure into the presentation while not overly complicating the chart.
+
+We want to use facet_grid() here and keep all the plots in the same column, enabling easy comparisons outside of a region while still maintaining the region-level grouping.
+
+You will also need to adjust the scale argument in facet_grid() in order to avoid repeating the entire y-axis structure for every facet.
+
+Instructions
+
+Add facet_grid() to the code from the last plot and set its faceting variable to region~..
+Set y-axis to be free by setting scale to 'free_y'.
+
+```{r}
+
+who_subset %>% 
+	mutate(logFoldChange = log2(cases_2002/cases_1992)) %>% 
+	ggplot(aes(x = logFoldChange, y = reorder(country, logFoldChange))) +
+	geom_point() +
+	geom_vline(xintercept = 0) +
+	xlim(-6,6) +
+	# add facet_grid arranged in the column direction by region and free_y scales
+	facet_grid(region~.,scale = "free_y")
+```
+
+# Let's flip some axes
+First, we can practice rotating a plot. Provided is code that makes a bar plot of the number of cases of pertussis in the Americas region (AMR) in 1980. You will notice it's almost unreadable.
+
+First, to help see patterns that may be in the data, reorder() the columns in descending order of cases.
+
+Next, let's coord_flip() the axes to make it possible to read the country names.
+
+
+Instructions
+
+reorder() the x-axis by descending order of cases
+Add coord_flip() to the plot to swap x and y-axes.
+
+```{r}
+amr_pertussis <- who_disease %>% 
+	filter(   # filter data to our desired subset
+		region == 'AMR', 
+		year == 1980, 
+		disease == 'pertussis'
+	)
+# Set x axis as country ordered with respect to cases. 
+ggplot(amr_pertussis, aes(x = reorder(country, cases), y = cases)) +
+	geom_col() +
+	# flip axes
+	coord_flip()
+```
+
+# Cleaning up the bars
+The changes we made to the last plot are great and improved it immensely, but we can go further!
+
+We seem to have a few countries that have zero counts for the cases. Let's get rid of these to free up even more space for the country names to breath.
+
+In addition, let's get rid of the unnecessary horizontal lines that are cluttering up the background.
+
+The dataframe amr_pertussis that we made in the last exercise is already loaded for you.
+
+Instructions
+
+Add a filter() to amr_pertussis so we only have countries that had more than zero cases.
+Using the theme() function, remove the horizontal grid lines panel.grid.major.y from the background.
+
+```{r}
+
+amr_pertussis %>% 
+	# filter to countries that had > 0 cases. 
+	filter(cases > 0) %>%
+	ggplot(aes(x = reorder(country, cases), y = cases)) +
+	geom_col() +
+	coord_flip() +
+	# get rid of the 'major' y grid lines
+	theme(panel.grid.major.y = element_blank())
+	
+```
+
+# Converting to point chart
+Our plot in the last exercise looked good, but what if we care about the values of the lower-end of the cases? It's hard for us to get a sense of their values because Brazil and Argentina are forcing the axis' upper range so high.
+
+This is a good situation to switch to a log scale. However, remember that when on a log scale our stacking concept fails, so we should switch to a point chart! Note the additional filter added to the pipeline. What happens if you run the code without it?
+
+This time, instead of modifying the data before sending to ggplot(), we will add scale_y_log10() to our plot and ggplot will take care of it for us.
+
+To polish, use theme_minimal() to lighten the chart up and increase the size of the points from the default to 2
+
+Instructions
+
+Change the geometry from geom_col() to geom_point() .
+Increase point size with size = 2.
+Switch to a log scale with scale_y_log10().
+Lighten the background with theme_minimal().
+
+```{r}
+amr_pertussis %>% filter(cases > 0) %>% 
+	ggplot(aes(x = reorder(country, cases), y = cases)) + 
+	# switch geometry to points and set point size = 2
+	geom_point(size = 2) + 
+	# change y-axis to log10. 
+	scale_y_log10() +
+	# add theme_minimal()
+	theme_minimal() +
+	coord_flip()
+```
+

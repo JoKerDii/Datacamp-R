@@ -1,0 +1,235 @@
+---
+title: "Datacamp_Visualization Best Practices in R__Single distributions"
+author: "dizhen"
+date: "2019Äê4ÔÂ26ÈÕ"
+output: html_document
+---
+# Orienting with the data
+Let's take our first look at the new speeding dataset.
+
+First, print the dataframe to your screen and try and get a sense of it. You can use filter()s, groupby()s or any of your tidyverse functions to do this.
+
+The supplied code is what we used to make the histogram of blue car speeds in the slides. Modify this code to look at how many miles-per-hour red cars were going over the speed limit (speed_over). Give the plot a title while you're at it to let people know what they're looking at.
+
+Instructions
+
+Print the md_speeding dataframe to the console and investigate it.
+Change filter() to 'RED' cars.
+Change column of interest to speed_over.
+Title plot 'MPH over speed limit | Red cars'
+
+```{r}
+# Print data to console
+md_speeding
+
+# Change filter to red cars
+md_speeding %>% 
+	filter(vehicle_color == 'RED') %>% 
+	# switch x mapping to speed_over column
+	ggplot(aes(x = speed_over)) +
+	geom_histogram() +
+	# give plot a title
+	ggtitle("MPH over speed limit | Red cars")
+	
+```
+# Looking at all data
+Looking at the speed for a given car color is a little contrived so let's change the example we saw in the slides to include all of the data.
+
+Your job is to fill in the code to make a histogram of the speed_over column of the data.
+
+In addition, to allow the reader to more easily anchor themselves with respect to the axes, lower the alpha of the histogram to allow the grid lines to show through. Pair this with the addition of theme_minimal() to darken the grid lines and lighten the background to compensate for the lighter bars.
+
+Instructions
+
+Add geom_histogram() with speed_over mapped to the x-axis.
+Set alpha of histogram to 0.7.
+Add theme_minimal() to plot to increase contrast.
+
+```{r}
+
+ggplot(md_speeding) + 
+	# Add the histogram geometry 
+	geom_histogram(
+        # Map speed_over to x
+		aes(x = speed_over),
+		# Lower alpha to 0.7
+		alpha = 0.7
+	) +
+	# Add minimal theme
+	theme_minimal()
+```
+
+# Changing y-axis to density
+By default, you will notice that the y-axis is the 'count' of points that fell within a given bin. This is nice and interpretable, but what if we wanted to interpret the plot as a true density curve like it's trying to estimate? I.e. all the (bar widths) * (bar heights) sum to 1?
+
+To do this we simply add y = stat(density) to the aesthetic mappings, this will re-scale the y-axis from counts to an empirical probability estimate. Note this won't change the shape of the plot at all, but will simply give you a different interpretation of the y-axis.
+
+Let's try it out on the hour of the day that a speeder was pulled over (hour_of_day). In addition, lower the opacity of the bars a bit so the grid lines show through to allow easier comparisons.
+
+Instructions
+
+set x-aesthetic to hour_of_day.
+set the y-aesthetic to stat(density).
+change the alpha value in geom_histogram() to 0.8.
+
+```{r}
+
+ggplot(md_speeding) +
+	geom_histogram(
+		# set x and y aesthetics to hour_of_day and stat(density) respectively.
+		aes(x = hour_of_day, y = stat(density)),
+		# make points see-through by setting alpha to 0.8
+		alpha = 0.8
+	)
+```
+
+# Adjusting the bin numbers
+Let's take our first steps away from the default number of bins with our histograms. We'll start by building a histogram of the percentage of the speed a driver is traveling over the limit for each citation. This is calculated as ((speed - speed_limit) / speed_limit)*100.
+
+Plot percentage over the speed limit as a histogram with the number of bins set to 40. While you're at it, set the alpha to 0.8. You're entirely on your own with this one, no scaffolding.
+
+Instructions
+
+Load md_speeding into ggplot() object.
+Add a histogram geometry to plot.
+Set x aes()thetic to percentage_over_limit.
+Adjust settings for 40 bins and set alpha as 0.8.
+
+```{r}
+# Load md_speeding into ggplot
+ggplot(md_speeding) +
+  # add a geom_histogram with x mapped to percentage_over_limit
+    geom_histogram(
+        aes(x = percentage_over_limit),
+        bins = 40,     # set bin number to 40
+        alpha = 0.8)    # reduce alpha to 0.8
+
+```
+
+
+# More bars
+With the last plot, 40 bins make it roughly look like we have a skewed but unimodal distribution. Remember the rule-of-thumb from the slides: if you have more than 150 datapoints you should usually shoot straight up to 100 bins. Let's do that here.
+
+Edit the plot to have 100 bins instead of 40 and also change the color of the bars to 'steelblue' just because it's a good color and sometimes that's important.
+
+Do you notice anything about the range around 30% now? If you want to get a little more of an idea of what could be happening, try filtering the data to the percentage over the speed limit of 30.
+
+```{r}
+md_speeding %>% filter(percentage_over_limit == 30)
+
+```
+See anything surprising for a continuous value?
+
+Instructions
+
+Change bin number to 100
+Set fill of bars to 'steelblue'
+
+```{r}
+
+ggplot(md_speeding) +
+    geom_histogram(
+        aes(x = percentage_over_limit),
+        bins = 100 ,         # switch to 100 bins
+        fill = 'steelblue',                 # set the fill of the bars to 'steelblue'
+        alpha = 0.8 )
+```
+
+# Bin width by context
+The supplied code looks at the distribution of citations by hour of the day. Notice how the bars don't fall nicely on a given hour; making the interpretation of the bar heights a bit ungainly. When your data has natural breakpoints like this, you should exploit them. In this case, we can set our breaks to fall on the hour boundaries.
+
+Modify geom_histogram() to set the binwidth to 1 hour. This argument, however, doesn't tell ggplot where to start its bins, which by default is determined by the extent of the data. To fix this, set the center argument to 0.5. This says you want one of the bars to be centered at 30 mins past midnight, ggplot then arranges the rest of the bars accordingly. (You could set this to be any hour + 0.5 such as 2.5, 3.5 etc..)
+
+Instructions
+
+Set the binwidth of the plot to 1.
+Center the bars on the half hour with the center argument.
+
+```{r}
+
+ggplot(md_speeding,aes(x = hour_of_day)) +
+    geom_histogram(
+        binwidth = 1,  # set binwidth to 1
+        center = 0.5  # Center bins at the half (0.5) hour
+    ) +
+    scale_x_continuous(breaks = 0:24)
+```
+
+# Histogram to KDE
+For these exercises, we will be looking at a subset of our data of citations handed out to "Heavy Duty Truck"s. We may be a data-savvy truck driver and want to know when the most dangerous time to be out on the road is. Note that the sample size here is only 32 observations.
+
+Below is code to make a default histogram with ggplot. Unsurprisingly, it's not great. There's not really enough data to fill out even 30 bins, making it rather hard to read or get a grasp of the data. Switch the geometry to a KDE using geom_density(). Lastly, in an effort to maintain the most transparency with your visualization, add a subtitle to the plot telling the viewer the bin-width used for your KDE.
+
+Instructions
+
+Change histogram geometry to a density one (geom_density()).
+Modify the default bin width to be 1.5 units.
+Add the subtitle "Gaussian kernel SD = 1.5"to your plot, telling the reader the binwidth of your kernel
+
+```{r}
+# filter data to just heavy duty trucks
+truck_speeding <- md_speeding %>% 
+    filter(vehicle_type == "Heavy Duty Truck")
+ 
+ggplot(truck_speeding, aes(x = hour_of_day)) +
+    # switch to density with bin width of 1.5, keep fill 
+    geom_density(fill = 'steelblue', bw = 1.5) +
+    # add a subtitle stating binwidth
+    labs(title = 'Citations by hour', subtitle = "Gaussian kernel SD = 1.5") 
+    
+```
+
+# Putting a rug down
+The plot we just made looks pretty good, but we can see a small hint of bi-modality between the hours of 10 and 15. Given we just are looking the blob of a density estimate it's hard to know how confident we are in that shape.
+
+Let's alleviate this by doing a couple things.
+
+First, lower the alpha on the density plot so we can more accurately locate these peaks using the background grid.
+
+Next, add a rug-plot beneath the density plot using geom_rug(). To show any overlap that may occur in the rug plot set its alpha to 0.5.
+
+The dataframe you made in the last exercise: truck_speeding has already been loaded for you.
+
+Instructions
+
+Set alpha of density plot to 0.7.
+Add geom_rug() to the plot.
+Set alpha of rug plot to 0.5.
+
+```{r}
+
+ggplot(truck_speeding, aes(x = hour_of_day)) +
+    # Adjust opacity to see gridlines with alpha = 0.7
+    geom_density(bw = 1.5, fill = 'steelblue', alpha = 0.7) +
+    # add a rug plot using geom_rug to see individual datapoints, set alpha to 0.5.
+    geom_rug(alpha = 0.5) +
+    labs(title = 'Citations by hour', subtitle = "Gaussian kernel SD = 1.5")
+```
+
+# KDE with lots of data
+The code supplied will make a basic KDE of the percentage_over_limit for all citations. At first glance, the settings makes sense. We have a lot of data so we set our bin width nice and narrow: just one percent. Also, the rug plot, which has been thoughtfully added, has a lowered alpha of 0.7.
+
+Running this code, you will immediately see it's not a great plot. The density estimate looks like a porcupine and the rug plot is essentially a thick black bar due to massive overlap.
+
+Fix it by upping the bin width a bit to 2.5 and lowering the alpha of the rug plot to 0.05 to try and get some sense of the point overlap. Don't forget to change the subtitle to reflect the change in the kernel width!
+
+Instructions
+
+Change kernel sd to 2.5
+Set alpha of rugplot to 0.05
+Change the subtitle to "Gaussian kernel SD = 2.5" to reflect the new kernel width.
+
+```{r}
+
+ggplot(md_speeding, aes(x = percentage_over_limit)) +
+    # Increase bin width to 2.5
+    geom_density(fill = 'steelblue', bw = 2.5,  alpha = 0.7) + 
+    # lower rugplot alpha to 0.05
+    geom_rug(alpha = 0.05) + 
+    labs(
+        title = 'Distribution of % over speed limit', 
+        # modify subtitle to reflect change in kernel width
+        subtitle = "Gaussian kernel SD = 2.5"
+    )
+```
+
