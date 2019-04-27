@@ -1,0 +1,268 @@
+---
+title: "Datacamp_Visualization Best Practices in R__Comparing distributions"
+author: "dizhen"
+date: "2019Äê4ÔÂ27ÈÕ"
+output: html_document
+---
+# A simple boxplot
+Let's get started by simply making a box plot similar to the ones we made in the slides.
+
+Modify the filter() to look at 'RED' cars instead of blue and then map the x-axis to gender and the y-axis to driver speed. Add your boxplot geometry and give it a title.
+
+Instructions
+
+Modify filter() command to filter to 'RED' vehicles.
+Fill in aes() by mapping x to gender and y to speed.
+Add a boxplot geometry to the plot.
+Title plot 'Speed of red cars by gender of driver'.
+
+```{r}
+md_speeding %>% 
+    filter(vehicle_color == 'RED') %>%
+    # Map x and y to gender and speed columns respectively
+    ggplot(aes(x = gender, y = speed)) + 
+    # add a boxplot geometry
+    geom_boxplot() +
+    # give plot supplied title
+    labs(title = 'Speed of red cars by gender of driver')
+```
+
+# Adding some jitter
+We can improve the previous plot by adding jittered points behind the box plot. Make the jittered points a nice 'steelblue' color and set their alpha to 0.3 in order to visualize any overlap that may happen by chance.
+
+You will also need to make the boxplot transparent in order to see the points that fall under the 'box' of the box plot.
+
+Instructions
+
+Add geom_jitter() to the plot object before the boxplot geometry.
+Set the color of the jittered points to 'steelblue' and the alpha to 0.3.
+Make existing box plot transparent by setting alpha to 0.
+
+```{r}
+
+md_speeding %>% 
+    filter(vehicle_color == 'RED') %>%
+    ggplot(aes(x = gender, y = speed)) + 
+    # add jittered points with alpha of 0.3 and color 'steelblue'
+    geom_jitter(color = "steelblue",alpha = 0.3) +
+    # make boxplot transparent with alpha = 0
+    geom_boxplot(alpha = 0) +
+    labs(title = 'Speed of red cars by gender of driver')
+```
+# Faceting to show all colors
+As we may expect, there doesn't appear to be too big of a difference in genders for red cars. What happens if we instead facet to look at this comparison across all the colors?
+
+It's not uncommon when comparing distributions to want to look at a large number of conditions. When doing this faceting, we're looking at all 10k points.
+
+Instructions
+
+Remove filter() for red cars.
+Add a facet_wrap() by vehicle_color.
+Change title to 'Speed of different car colors, separated by gender of driver'
+
+```{r}
+
+# remove color filter
+md_speeding %>% 
+    ggplot(aes(x = gender, y = speed)) + 
+    geom_jitter(alpha = 0.3, color = 'steelblue') +
+    geom_boxplot(alpha = 0) +
+    # add a facet_wrap by vehicle_color
+    facet_wrap(~vehicle_color) +
+    # change title to reflect new faceting
+    labs(title = 'Speed of different car colors, separated by gender of driver')
+```
+
+# Your first beeswarm
+The following code makes a simple beeswarm plot for you of the gender speeding data, similar to what we saw in the last lesson.
+
+You will notice that it doesn't look fantastic due to the stacking of the points causing overlap between the two genders' spreads.
+
+Fix up this plot by reducing the size of the points using the cex argument to 0.5 and setting an opacity value for the points as to make the plots a little less harsh and emphasize the individual points.
+
+In addition, add a transparent boxplot over the points to provide basic summary statistics as well.
+
+Instructions
+
+Reduce size of points by setting cex = 0.5 in the beeswarm geometry.
+Set the alpha of the points to 0.8 .
+Add a transparent boxplot on top of the beeswarm.
+
+```{r}
+# Load library for making beeswarm plots
+library(ggbeeswarm)
+
+md_speeding %>% 
+    filter(vehicle_color == 'RED') %>%
+    ggplot(aes(x = gender, y = speed)) + 
+    # change point size to 0.5 and alpha to 0.8
+    geom_beeswarm(cex = 0.5, alpha = 0.8) +
+    # add a transparent boxplot on top of points
+    geom_boxplot(alpha = 0)
+```
+
+# Fiddling with a violin plot
+The supplied code makes a simple violin plot of the same comparison we've been looking at.
+
+Much like with geom_density(), ggplot has given us an unfilled (or at least white) shape. To make this more aesthetically pleasing, set the fill to 'steelblue'. Set the kernel SD to an intuitively reasonable value and make sure to state this kernel width in the subtitle of the plot.
+
+In addition, let's attempt to replicate the rain-cloud plots from the density lesson and add (non-jittered) points back to the plot over the violins to attempt to see where interpolation is happening. Do this by simply adding a geom_point() geometry and setting the color to 'white', the alpha to 0.3 to show overlap, and the size to 0.5 to keep the points as unobtrusive as possible.
+
+Instructions
+
+Swap geom_beeswarm() with geom_violin().
+Set the kernel width (bw) of the violin plot to 2.5.
+Add individual points underneath with geom_point().
+Style individual points with alpha = 0.3, size = 0.5.
+
+```{r}
+
+md_speeding %>% 
+    filter(vehicle_color == 'RED') %>%
+    ggplot(aes(x = gender, y = speed)) + 
+    # Replace beeswarm geometry with a violin geometry with kernel width of 2.5
+    geom_violin(cex = 0.5, alpha = 0.7, bw = 2.5) +
+    # add individual points on top of violins
+    geom_point(alpha = 0.3, size = 0.5)
+```
+
+# Violins with boxplots
+If we still want the handy summary statistics that a box plot provides while not sacrificing the benefits of a violin plot, we can simply add a geom_boxplot() on top of the violin geometry in our plot object.
+
+One issue we run into when doing this, however, is that the box plots are awkwardly wide. We only need to see where the horizontal lines are and not much more. Luckily, geom_boxplot() has the argument width, which scales the width of the boxplot (e.g. 0.5 = half-width).
+
+Modify the plot we just made to have a boxplot between the violin and point geometries. In addition, change the points to have shape = 95 which is a horizontal tick mark. Lastly, we forgot to tell the user our kernel width, let's do that now.
+
+Instructions
+
+Add a geom_boxplot() between violin and point geometries.
+Set box alpha to 0 and width to 0.3.
+Change point geometry to shape = 95 and delete size argument.
+Give plot a subtitle with labs(subtitle = 'Gaussian kernel SD = 2.5').
+
+```{r}
+
+md_speeding %>% 
+    filter(vehicle_color == 'RED') %>%
+    ggplot(aes(x = gender, y = speed)) + 
+    geom_violin(bw = 2.5) +
+    # add a transparent boxplot and shrink its width to 0.3
+    geom_boxplot(alpha = 0, width = 0.3) +
+    # Reset point size to default and set point shape to 95
+    geom_point(alpha = 0.3, shape = 95) +
+    # Supply a subtitle detailing the kernel width
+    labs(subtitle = 'Gaussian kernel SD = 2.5')
+```
+
+# Comparing lots of distributions
+Let's revisit the faceted plot we made before, but now with our handy new techniques. Can we get a better handle on the relationships with our new plot types?
+
+The supplied code makes the same visualization you did in the last lesson. Change the code to use violin plots to display the density instead of jitter plots to draw the individual data. Like in the last exercise, shrink the box plot width so they mostly sit within the violin plots. Last, don't forget to add a subtitle to the plot telling the viewer the width of your violin plot kernels!
+
+Instructions
+
+Replace geom_jitter() with geom_violin().
+Set fill = 'steelblue' and kernel standard deviation of 2.5 for the violin geometry.
+Shrink geom_boxplot() width by setting it to 0.3.
+Add the subtitle Gaussian kernel width: 2.5'.
+
+```{r}
+
+md_speeding %>% 
+    ggplot(aes(x = gender, y = speed)) + 
+    # replace with violin plot with kernel width of 2.5, change color argument to fill 
+    geom_violin(fill = "steelblue", bw = 2.5) +
+    # reduce width to 0.3
+    geom_boxplot(alpha = 0, width = 0.3) +
+    facet_wrap(~vehicle_color) +
+    labs(
+        title = 'Speed of different car colors, separated by gender of driver',
+        # add a subtitle w/ kernel width
+        subtitle = "Gaussian kernel width: 2.5"
+    )
+```
+
+# A basic ridgeline plot
+Supplied is code to make a ridgeline plot looking at the percentage over the limit drivers were pulled over going by day of the week.
+
+Modify the code to set the kernel width (bandwidth) to a specified value, change the x-axis limits to get rid of the long tails, and also add a subtitle letting the reader know the bandwidth you are using.
+
+Instructions
+
+Change the bandwidth to 3.5 in geom_density_ridges().
+Set the limits of the x-scale to 0 to 150.
+Give plot the subtitle 'Gaussian kernel SD = 3.5'.
+
+```{r}
+library(ggridges)
+
+md_speeding %>% 
+    mutate(day_of_week = factor(day_of_week, levels = c("Mon","Tues","Wed","Thu","Fri","Sat","Sun") )) %>% 
+    ggplot(aes( x = percentage_over_limit, y = day_of_week)) + 
+    # Set bandwidth to 3.5
+    geom_density_ridges(bandwidth = 3.5) +
+    # add limits of 0 to 150 to x-scale
+    scale_x_continuous(limits = c(0,150)) 
+    # provide subtitle with bandwidth
+    labs(subtitle = "Gaussian kernel SD = 3.5")
+    
+```
+
+# Cleaning up your ridgelines
+Let's modify the plot from the last exercise, even more, to make it prettier and easier to read.
+
+To do this, make the densities a bit transparent to help avoid overlapping issues by modifying the alpha value in the ridgeline geometry. Next, get rid of the extra space that ggplot puts around the extremes of the data to avoid the awkward empty strip on the right and left where the densities don't interpolate. Finally, use the theme() function to remove the y-axis ticks because the density lines already serve the purpose to point to the y-axis labels.
+
+The ggridges library is already loaded for you.
+
+Instructions
+
+Set alpha of geom_density_ridges() to 0.7.
+Set expand = c(0,0) in the scale_x_continuous() call.
+Remove axis.ticks.y in the theme() function.
+
+```{r}
+
+md_speeding %>% 
+    mutate(day_of_week = factor(day_of_week, levels = c("Mon","Tues","Wed","Thu","Fri","Sat","Sun") )) %>% 
+    ggplot(aes( x = percentage_over_limit, y = day_of_week)) + 
+    # make ridgeline densities a bit see-through with alpha = 0.7
+    geom_density_ridges(bandwidth = 3.5, alpha = 0.7) +
+    # set expand values to c(0,0)
+    scale_x_continuous(limits = c(0,150), expand = c(0,0)) +
+    labs(subtitle = 'Guassian kernel SD = 3.5') +
+    # remove y axis ticks
+    theme(axis.ticks.y = element_blank())
+```
+
+# Making it rain (datapoints)
+The increased bi-modality we see early in the week could be compelling, but we should draw individual points below the densities in order to get a sense of what the KDE is doing in terms of interpolation before calling it a day.
+
+Added to the previous exercises' code is a point geometry to do just this. You will notice it doesn't look very good. To make it better we will do a few things...
+
+First, lower the point alphas slightly to visualize overlap. Second, switch the point shape to the geom_rug() style vertical lines ('|').
+
+At this stage, if you run the code you will see the points awkwardly clip the density shapes. We need to 'nudge' the tick marks down the y-axis a tiny bit. To do this we can use the position argument and the helper function position_nudge().
+
+Instructions
+
+Lower alpha of the points to 0.2 to show overlap.
+Change the line shape to '|' for more efficient space utilization.
+Push points down so they don't overlap the density shape with position = position_nudge(y = -0.05).
+
+```{r}
+
+md_speeding %>% 
+    mutate(day_of_week = factor(day_of_week, levels = c("Mon","Tues","Wed","Thu","Fri","Sat","Sun") )) %>% 
+    ggplot(aes( x = percentage_over_limit, y = day_of_week)) + 
+    geom_point(alpha = 0.2,shape = "|",position = position_nudge(y = -0.05)
+        # make semi-transparent with alpha = 0.2
+        # turn points to vertical lines with shape = '|'
+        # nudge the points downward by 0.05
+    ) +
+    geom_density_ridges(bandwidth = 3.5) +
+    scale_x_continuous(limits = c(0,150), expand  = c(0,0)) +
+    labs(subtitle = 'Guassian kernel SD = 3.5') +
+    theme( axis.ticks.y = element_blank() )
+```
+

@@ -1,0 +1,120 @@
+---
+title: "Datacamp_Writing Efficient R Code__The Art of Benchmarking"
+author: "dizhen"
+date: "2019Äê4ÔÂ27ÈÕ"
+output: html_document
+---
+# R version
+One of the relatively easy optimizations available is to use an up-to-date version of R. In general, R is very conservative, so upgrading doesn't break existing code. However, a new version will often provide free speed boosts for key functions.
+
+The version command returns a list that contains (among other things) the major and minor version of R currently being used.
+
+Instructions
+
+Print the version details of R using version. (It's not a function.)
+Use dollar indexing ($) to extract the major component of version and assign it to the variable major.
+Likewise, extract the minor component and assign it to the variable minor.
+
+```{r}
+# Print the R version details using version
+version
+
+# Assign the variable major to the major component
+major <- version$major
+
+# Assign the variable minor to the minor component
+minor <- version$minor
+```
+
+# Comparing read times of CSV and RDS files
+One of the most common tasks we perform is reading in data from CSV files. However, for large CSV files this can be slow. One neat trick is to read in the data and save as an R binary file (rds) using saveRDS(). To read in the rds file, we use readRDS().
+
+Note: Since rds is R's native format for storing single objects, you have not introduced any third-party dependencies that may change in the future.
+
+To benchmark the two approaches, you can use system.time(). This function returns the time taken to evaluate any R expression. For example, to time how long it takes to calculate the square root of the numbers from one to ten million, you would write the following:
+
+```{r}
+system.time(sqrt(1:1e7))
+
+```
+Instructions
+
+The files "movies.csv" and "movies.rds" both contain identical data frames with information on 45,000 movies.
+
+Using the system.time() function, how long does it take to read in the CSV file using read.csv("movies.csv").
+Repeat for the rds file, "movies.rds" using readRDS().
+
+```{r}
+# How long does it take to read movies from CSV?
+system.time(read.csv("movies.csv"))
+
+# How long does it take to read movies from RDS?
+system.time(readRDS("movies.rds"))
+
+```
+# Elapsed time
+Using system.time() is convenient, but it does have its drawbacks when comparing multiple function calls. The microbenchmark package solves this problem with the microbenchmark() function.
+
+Instructions
+
+The "movies.csv" and "movies.rds" files are available in your workspace.
+
+Load the microbenchmark package using the library() function.
+Using microbenchmark(), read.csv(), and readRDS(), compare the time it takes to import the CSV file with the time it takes to import the RDS file. Store the result as a variable called compare.
+In your call to microbenchmark(), specify times = 10 to call each function 10 times.
+Print compare to see the results.
+
+```{r}
+# Load the microbenchmark package
+library(microbenchmark)
+
+# Compare the two functions
+compare <- microbenchmark(read.csv("movies.csv"), 
+                          readRDS("movies.rds"), 
+                          times = 10)
+# Print compare
+compare
+```
+
+# DataCamp hardware
+For many problems your time is the expensive part. If having a faster computer makes you more productive, it can be cost effective to buy one. However, before you splash out on new toys for yourself, your boss/partner may want to see some numbers to justify the expense. Measuring the performance of your computer is called benchmarking, and you can do that with the benchmarkme package.
+
+Intruction:
+
+After you've loaded the benchmarkme package:
+
+Obtain the amount of RAM on this machine using get_ram().
+Obtain the CPU specifications using get_cpu().
+
+```{r}
+# Load the benchmarkme package
+library("benchmarkme")
+
+# Assign the variable ram to the amount of RAM on this machine
+ram <- get_ram()
+ram
+
+# Assign the variable cpu to the cpu specs
+cpu <- get_cpu()
+cpu
+```
+# Benchmark DataCamp's machine
+The benchmarkme package allows you to run a set of standardized benchmarks and compare your results to other users. One set of benchmarks tests is reading and writing speeds.
+
+The function call
+
+res = benchmark_io(runs = 1, size = 5)
+records the length of time it takes to read and write a 5MB file.
+
+```{r}
+
+# Load the package
+library("benchmarkme")
+
+# Run the io benchmark
+res = benchmark_io(runs = 1, size = 5)
+
+# Plot the results
+plot(res)
+```
+
