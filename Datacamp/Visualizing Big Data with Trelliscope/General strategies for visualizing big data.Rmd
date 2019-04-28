@@ -1,0 +1,172 @@
+---
+title: Datacamp_Visualizing Big Data with Trelliscope__General strategies for visualizing
+  big data
+author: "dizhen"
+date: "2019Äê4ÔÂ28ÈÕ"
+output: html_document
+---
+# Daily ride counts
+A useful way to tabulate and visualize cab rides is by looking at the number of rides according to the calendar day. In this exercise, you'll compute this summary and examine how daily ridership varies by time and the day of week.
+
+The tx data set is preloaded for you.
+
+Instructions
+
+Create a daily summary, grouping by the date of pickup (pickup_date) and counting the number of rides, calling the new variable n_rides.
+Plot the result using ggplot2's geom_line(), with pickup_date on the x-axis and n_rides on the y-axis.
+
+```{r}
+library(dplyr)
+library(ggplot2)
+
+# Summarize taxi ride count by pickup day
+daily_count <- tx %>%
+  group_by(pickup_date) %>%
+  summarise(n_rides = n())
+
+# Create a line plot
+ggplot(daily_count, aes(x = pickup_date, y = n_rides)) +
+  geom_line()
+```
+
+# Distribution of cab fare amount
+Let's learn about how much cab rides cost in NYC and look at a histogram of the total cab fare. Since the fare amount is likely to be highly skewed, we will plot it with the x-axis in the log scale.
+
+The tx data set is preloaded for you.
+
+Instructions
+
+Plot the the distribution of the total cab fare,total_amount using geom_histogram().
+In the last line, apply a log base 10 scale to the x-axis using scale_x_log10(). Note that you will receive a warning message about 62 data points that have a total fare of $0. These points are ignored since the logarithm is infinite.
+
+```{r}
+library(ggplot2)
+
+# Create a histogram of total_amount
+ggplot(tx, aes(total_amount)) +
+  geom_histogram() +
+  scale_x_log10()
+```
+
+# Distribution of payment type
+An interesting categorical variable in the data having to do with payments is the payment type. This has four possible values: Card, Cash, Disputed, and Unknown. A bar chart of the frequency of each of these values can help us understand the prevalence of different payment methods.
+
+tx is available for you in your workspace.
+
+Instructions
+
+Use a bar chart to plot the frequency distribution of payment_type
+
+```{r}
+
+library(ggplot2)
+
+# Create a bar chart of payment_type
+ggplot(tx, aes(payment_type)) +
+  geom_bar()
+```
+
+# Relationship between trip duration and total fare
+We would assume that there is a relationship between the total cab fare and the duration of the trip. Since there are too many data points to make a scatterplot, let's use a hexagon-binned plot to investigate this relationship.
+
+tx is available for you in your workspace.
+
+Instructions
+
+Use hexagon bins to visualize the bivariate distribution of total_amount (y-axis) vs. trip_duration (x-axis).
+Set the bins argument of geom_hex() to 75.
+Since both variables are highly skewed, rescale both the x and y axes to log base 10. Note that these transformations will generate some warnings about a relatively small number of records with zero trip duration or fare amount.
+
+```{r}
+library(ggplot2)
+
+# Create a hexagon-binned plot of total_amount vs. trip_duration
+ggplot(tx, aes(x= trip_duration, y = total_amount)) +
+  geom_hex(bins = 75) +
+  scale_x_log10() +
+  scale_y_log10()
+```
+
+# Faceting daily rides
+We noticed some interesting behavior when we looked at daily ride counts faceted by day-of-week. Let's investigate whether faceting on additional variables yields any new insights. Here we will see if there are different day-of-week patterns when also looking at the payment types of cash or credit card.
+
+tx is available for you in your workspace.
+
+Instructions
+
+After filtering to just cash and credit transactions, create a summary by day of week and payment type count using dplyr, grouping by the pickup_date, pickup_dow, payment_type.
+Inside summarise(), count the number of rides and assign the result to a new variable n_rides.
+Plot the result using the daily_count summary dataset as an input to ggplot() and using geom_point(), with pickup_date on the x-axis and n_rides on the y-axis.
+Use facet_grid() to facet with payment_type as rows and day of week pickup_dow as columns.
+Note that the coord_fixed() code constrains the aspect ratio of the resulting plot to help highlight patterns visually.
+
+```{r}
+
+library(dplyr)
+library(ggplot2)
+
+# Summarize taxi rides count by payment type, pickup date, pickup day of week
+daily_count <- tx %>%
+  filter(payment_type %in% c("Card", "Cash")) %>%
+  group_by(pickup_date, pickup_dow, payment_type) %>%
+  summarise(n_rides = n())
+
+# Plot the data
+ggplot(daily_count, aes(x = pickup_date, y = n_rides)) +
+  geom_point() +
+  facet_grid(payment_type ~ pickup_dow) +
+  coord_fixed(ratio = 0.4)
+```
+
+# Tip amount distribution faceted by payment type
+The distribution of the total cab fare plot we created earlier was interesting, but we might be able to gain additional insight into this distribution by investigating whether it varies with respect to another variable. In this exercise, we'll look at the tip amount portion of the cab fare distribution and see if it is different for different payment types by creating a histogram and faceting on payment type.
+
+tx is preloaded into your workspace for you.
+
+Instructions
+
+Create a histogram of tip_amount + 0.01 (a cent to each tip because we will take a log transform and there are tips that are zero).
+Use scale_x_log10() to transform the x-axis.
+Use facet_wrap() to facet by payment_type. To help visually compare distributions, set the number of columns to 1 and make the y-axis scales free by specifying the scales to be "free_y".
+
+```{r}
+
+library(ggplot2)
+
+# Histogram of the tip amount faceted on payment type
+ggplot(tx, aes(tip_amount + 0.01)) +
+  geom_histogram() +
+  scale_x_log10() +
+  facet_wrap(~ payment_type, ncol = 1, scales = "free_y")
+```
+
+# Comparing fare distribution by payment type
+We have seen that there is no tip for cash payments. Does this mean people who pay with cash don't tip, or does it mean that tips aren't recorded when people pay with cash? For similar routes, we would expect the distributions of total fare to be identical regardless of payment type. In this exercise, we will create a quantile plot comparing the distribution of total fare by payment type and compare that with the original plot in a different facet.
+
+A dataset amount_compare has been created for you that contains variables payment_type, amount, and amount_type. amount_type distinguishes between values that reflect a total payment vs. a payment with no tip.
+
+Instructions
+
+Inspect the amount_compare dataset prior to completing the exercise by printing it to the console to understand its structure to help with the plot specification.
+Use geom_qq() to create a quantile plot of the total fare amount, amount. Be sure to specify distribution = stats::qunif.
+Make sure separate quantile plots are made for each payment type by coloring by payment type such that each distribution is superposed on the same plot.
+Show the distribution comparisons for each amount_type by faceting.
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+# Get data ready to plot
+amount_compare <- tx_pop %>%
+  mutate(total_no_tip = total_amount - tip_amount) %>%
+  select(total_amount, total_no_tip, payment_type) %>%
+  gather(amount_type, amount, -payment_type)
+
+# Quantile plot
+ggplot(amount_compare, aes(sample = amount, color = payment_type)) +
+  geom_qq(distribution = stats::qunif, shape = 21) +
+  facet_wrap(~ amount_type) +
+  ylim(c(3, 20))
+```
+
