@@ -1,0 +1,111 @@
+---
+title: "Datacamp_Visualizing Big Data with Trelliscope__ggplot2 + TrelliscopeJS"
+author: "dizhen"
+date: "2019Äê4ÔÂ29ÈÕ"
+output: html_document
+---
+# Trelliscope faceting gapminder by country
+With a subset of the gapminder data (just the two countries in Oceania), take the example of life expectancy vs. year faceted by country and continent and create a TrelliscopeJS display.
+
+The gapminder data set is available for you in your workspace.
+
+Instructions 1/2
+
+Plot a line showing life expectancy (lifeExp) on the y-axis vs. year on the x-axis using the proper geom_().
+Use facet_trelliscope() to facet on country and continent. Note that to facet on two variables, the syntax is ~ var1 + var2
+
+```{r}
+library(ggplot2)
+library(trelliscopejs)
+
+# Create the plot
+ggplot(gapminder, aes(x = year, y = lifeExp)) +
+  geom_line() +
+  # Facet on country and continent
+  facet_trelliscope(~ country + continent)
+```
+
+Instructions 2/2
+
+Set the name to "lifeExp_by_country" and desc to "Life expectancy vs. year per country".
+Set the initial layout to show 1 row and 2 columns.
+Note: Trelliscope displays are best viewed by expanding the HTML Viewer.
+
+```{r}
+library(ggplot2)
+library(trelliscopejs)
+
+ggplot(gapminder, aes(year, lifeExp)) +
+  geom_line() +
+  facet_trelliscope(~ country + continent,
+    name = "lifeExp_by_country",
+    desc = "Life expectancy vs. year per country",
+    nrow = 1, ncol = 2
+  )
+```
+
+# Customizing the gapminder display
+Let's put some of these features to the test with our by-country life expectancy trajectory plot. Note that we are again working with just the two countries from Oceania.
+
+Instructions
+
+Add a geom_smooth() layer to add a fitted linear model using the "lm" method.
+Set the scales to be "sliced".
+With the linear model layer added to the plot, specify that automatic cognostics should be computed for this display and explore what new cognostics this layer adds to the display.
+
+```{r}
+library(trelliscopejs)
+library(ggplot2)
+
+# Create the plot
+ggplot(gapminder, aes(year, lifeExp)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  facet_trelliscope(~ country + continent,
+    name = "lifeExp_by_country",
+    desc = "Life expectancy vs. year for 142 countries.",
+    nrow = 1, ncol = 2,
+    # Set the scales
+    scales = "sliced",
+    # Specify automatic cognistics
+    auto_cog = TRUE)
+```
+
+# Adding custom cognostics
+Let's create some custom cognostics. To do so, you'll add two new variables to the gapminder data: delta_lifeExp and ihme_link.
+
+Instructions
+
+Add a new variable called delta_lifeExp to the gapminder data that computes the difference between the first and last observed life expectancy (lifeExp) for each country. Note that the data is already sorted by year.
+Add another variable, ihme_link that links to the country's profile on healthdata.org, using space_to_dash() to replace spaces in country values to dashes. For example, for the country "Costa Rica", the link is "http://www.healthdata.org/Costa-Rica".
+Give the delta_lifeExp variable a description of "Overall change in life expectancy".
+Specify default_label = TRUE to make the ihme_link variable be shown as a label by default.
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(gapminder)
+library(trelliscopejs)
+space_to_dash <- function(x) gsub(" ", "-", x)
+
+# Group by country and create the two new variables
+gap <- gapminder %>%
+  group_by(country) %>%
+  mutate(
+    delta_lifeExp = tail(lifeExp, 1) - head(lifeExp, 1),
+    ihme_link = paste0("http://www.healthdata.org/", space_to_dash(country)))
+
+# Add the description
+gap$delta_lifeExp <- cog(gap$delta_lifeExp, desc = "Overall change in life expectancy")
+# Specify the default label
+gap$ihme_link <- cog(gap$ihme_link, default_label = TRUE)
+
+ggplot(gap, aes(year, lifeExp)) +
+  geom_point() +
+  facet_trelliscope(~ country + continent,
+    name = "lifeExp_by_country",
+    desc = "Life expectancy vs. year.",
+    nrow = 1, ncol = 2,
+    scales = c("same", "sliced"))
+```
+
