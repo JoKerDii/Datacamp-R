@@ -5,3 +5,213 @@ author: "dizhen"
 date: "2019Äê4ÔÂ30ÈÕ"
 output: html_document
 ---
+# Try a 60/40 split
+As you saw in the video, you'll be working with the Sonar dataset in this chapter, using a 60% training set and a 40% test set. We'll practice making a train/test split one more time, just to be sure you have the hang of it. Recall that you can use the sample() function to get a random permutation of the row indices in a dataset, to use when making train/test splits, e.g.:
+
+n_obs <- nrow(my_data)
+permuted_rows <- sample(n_obs)
+And then use those row indices to randomly reorder the dataset, e.g.:
+
+my_data <- my_data[permuted_rows, ]
+Once your dataset is randomly ordered, you can split off the first 60% as a training set and the last 40% as a test set.
+
+Instructions
+
+Get the number of observations (rows) in Sonar, assigning to n_obs.
+Shuffle the row indices of Sonar and store the result in permuted_rows.
+Use permuted_rows to randomly reorder the rows of Sonar, saving as Sonar_shuffled.
+Identify the proper row to split on for a 60/40 split. Store this row number as split.
+Save the first 60% of Sonar_shuffled as a training set.
+Save the last 40% of Sonar_shuffled as the test set.
+
+```{r}
+# Get the number of observations
+n_obs <- nrow(Sonar)
+
+# Shuffle row indices: permuted_rows
+permuted_rows <- sample(n_obs)
+
+# Randomly order data: Sonar
+Sonar_shuffled <- Sonar[permuted_rows, ]
+
+# Identify row to split on: split
+split <- round(n_obs * 0.6)
+
+# Create train
+train <- Sonar_shuffled[1:split, ]
+
+# Create test
+test <- Sonar_shuffled[(split + 1):n_obs, ]
+```
+
+# Fit a logistic regression model
+Once you have your random training and test sets you can fit a logistic regression model to your training set using the glm() function. glm() is a more advanced version of lm() that allows for more varied types of regression models, aside from plain vanilla ordinary least squares regression.
+
+Be sure to pass the argument family = "binomial" to glm() to specify that you want to do logistic (rather than linear) regression. For example:
+
+glm(Target ~ ., family = "binomial", dataset)
+Don't worry about warnings like glm.fit: algorithm did not converge or glm.fit: fitted probabilities numerically 0 or 1 occurred. These are common on smaller datasets and usually don't cause any issues. They typically mean your dataset is perfectly separable, which can cause problems for the math behind the model, but R's glm() function is almost always robust enough to handle this case with no problems.
+
+Once you have a glm() model fit to your dataset, you can predict the outcome (e.g. rock or mine) on the test set using the predict() function with the argument type = "response":
+
+predict(my_model, test, type = "response")
+
+Instructions
+
+Fit a logistic regression called model to predict Class using all other variables as predictors. Use the training set for Sonar.
+Predict on the test set using that model. Call the result p like you've done before.
+
+```{r}
+
+# Fit glm model: model
+model <- glm(Class ~ ., family = "binomial", train)
+
+# Predict on test: p
+p <- predict(model, test, type = "response")
+```
+
+# Calculate a confusion matrix
+As you saw in the video, a confusion matrix is a very useful tool for calibrating the output of a model and examining all possible outcomes of your predictions (true positive, true negative, false positive, false negative).
+
+Before you make your confusion matrix, you need to "cut" your predicted probabilities at a given threshold to turn probabilities into a factor of class predictions. Combine ifelse() with factor() as follows:
+
+pos_or_neg <- ifelse(probability_prediction > threshold, positive_class, negative_class)
+p_class <- factor(pos_or_neg, levels = levels(test_values))
+confusionMatrix() in caret improves on table() from base R by adding lots of useful ancillary statistics in addition to the base rates in the table. You can calculate the confusion matrix (and the associated statistics) using the predicted outcomes as well as the actual outcomes, e.g.:
+
+confusionMatrix(p_class, test_values)
+```{r}
+# If p exceeds threshold of 0.5, M else R: m_or_r
+m_or_r <- ifelse(p > 0.5, "M", "R")
+
+# Convert to factor: p_class
+p_class <- factor(m_or_r, levels = levels(test[["Class"]]))
+
+# Create confusion matrix
+confusionMatrix(p_class, test[["Class"]])
+```
+
+# Try another threshold
+In the previous exercises, you used a threshold of 0.50 to cut your predicted probabilities to make class predictions (rock vs mine). However, this classification threshold does not always align with the goals for a given modeling problem.
+
+For example, pretend you want to identify the objects you are really certain are mines. In this case, you might want to use a probability threshold of 0.90 to get fewer predicted mines, but with greater confidence in each prediction.
+
+The code pattern for cutting probabilities into predicted classes, then calculating a confusion matrix, was shown in Exercise 7 of this chapter.
+
+Instructions
+
+Use ifelse() to create a character vector, m_or_r that is the positive class, "M", when p is greater than 0.9, and the negative class, "R", otherwise.
+Convert m_or_r to be a factor, p_class, with levels the same as those of test[["Class"]].
+Make a confusion matrix with confusionMatrix(), passing p_class and the "Class" column from the test dataset.
+
+```{r}
+
+# If p exceeds threshold of 0.9, M else R: m_or_r
+m_or_r <- ifelse(p>0.9, "M", "R")
+
+# Convert to factor: p_class
+p_class <- factor(m_or_r, levels = levels(test[["Class"]]))
+
+# Create confusion matrix
+confusionMatrix(p_class,test[["Class"]])
+```
+
+# From probabilites to confusion matrix
+Conversely, say you want to be really certain that your model correctly identifies all the mines as mines. In this case, you might use a prediction threshold of 0.10, instead of 0.90.
+
+The code pattern for cutting probabilities into predicted classes, then calculating a confusion matrix, was shown in Exercise 7 of this chapter.
+
+Instructions
+
+Use ifelse() to create a character vector, m_or_r that is the positive class, "M", when p is greater than 0.1, and the negative class, "R", otherwise.
+Convert m_or_r to be a factor, p_class, with levels the same as those of test[["Class"]].
+Make a confusion matrix with confusionMatrix(), passing p_class and the "Class" column from the test dataset.
+
+```{r}
+
+# If p exceeds threshold of 0.1, M else R: m_or_r
+m_or_r <- ifelse(p>0.1, "M", "R")
+
+# Convert to factor: p_class
+p_class <- factor(m_or_r, levels = levels(test[["Class"]]))
+
+# Create confusion matrix
+confusionMatrix(p_class,test[["Class"]])
+```
+
+# Plot an ROC curve
+As you saw in the video, an ROC curve is a really useful shortcut for summarizing the performance of a classifier over all possible thresholds. This saves you a lot of tedious work computing class predictions for many different thresholds and examining the confusion matrix for each.
+
+My favorite package for computing ROC curves is caTools, which contains a function called colAUC(). This function is very user-friendly and can actually calculate ROC curves for multiple predictors at once. In this case, you only need to calculate the ROC curve for one predictor, e.g.:
+
+colAUC(predicted_probabilities, actual, plotROC = TRUE)
+The function will return a score called AUC (more on that later) and the plotROC = TRUE argument will return the plot of the ROC curve for visual inspection.
+
+Instructions
+
+model, test, and train from the last exercise using the sonar data are loaded in your workspace.
+
+Predict probabilities (i.e. type = "response") on the test set, then store the result as p.
+Make an ROC curve using the predicted test set probabilities.
+
+```{r}
+
+# Predict on test: p
+p <- predict(model,test,type = "response")
+
+# Make ROC curve
+colAUC(p, test[["Class"]], plotROC = TRUE)
+
+```
+
+# Customizing trainControl
+As you saw in the video, area under the ROC curve is a very useful, single-number summary of a model's ability to discriminate the positive from the negative class (e.g. mines from rocks). An AUC of 0.5 is no better than random guessing, an AUC of 1.0 is a perfectly predictive model, and an AUC of 0.0 is perfectly anti-predictive (which rarely happens).
+
+This is often a much more useful metric than simply ranking models by their accuracy at a set threshold, as different models might require different calibration steps (looking at a confusion matrix at each step) to find the optimal classification threshold for that model.
+
+You can use the trainControl() function in caret to use AUC (instead of acccuracy), to tune the parameters of your models. The twoClassSummary() convenience function allows you to do this easily.
+
+When using twoClassSummary(), be sure to always include the argument classProbs = TRUE or your model will throw an error! (You cannot calculate AUC with just class predictions. You need to have class probabilities as well.)
+
+Instructions
+
+Customize the trainControl object to use twoClassSummary rather than defaultSummary.
+Use 10-fold cross-validation.
+Be sure to tell trainControl() to return class probabilities.
+
+```{r}
+
+# Create trainControl object: myControl
+myControl <- trainControl(
+  method = "cv",
+  number = 10,
+  summaryFunction = twoClassSummary,
+  classProbs = TRUE, # IMPORTANT!
+  verboseIter = TRUE
+)
+```
+
+# Using custom trainControl
+Now that you have a custom trainControl object, it's easy to fit caret models that use AUC rather than accuracy to tune and evaluate the model. You can just pass your custom trainControl object to the train() function via the trControl argument, e.g.:
+
+train(<standard arguments here>, trControl = myControl)
+This syntax gives you a convenient way to store a lot of custom modeling parameters and then use them across multiple different calls to train(). You will make extensive use of this trick in Chapter 5.
+
+Instructions
+
+Use train() to predict Class from all other variables in the Sonar data (that is, Class ~ .). It should be a glm model (that is, set method to "glm") using your custom trainControl object, myControl. Save the result to model.
+Print the model to the console and examine its output.
+
+```{r}
+# Train glm with custom trainControl: model
+model <- train(
+  Class ~ ., 
+  Sonar, 
+  method = "glm",
+  trControl = myControl
+)
+
+# Print model to console
+model
+```
+
