@@ -1,0 +1,208 @@
+---
+title: "Datacamp_Machine Learning Toolbox__Tuning model parameters to improve performance"
+author: "dizhen"
+date: "2019Äê5ÔÂ2ÈÕ"
+output: html_document
+---
+# Fit a random forest
+As you saw in the video, random forest models are much more flexible than linear models, and can model complicated nonlinear effects as well as automatically capture interactions between variables. They tend to give very good results on real world data, so let's try one out on the wine quality dataset, where the goal is to predict the human-evaluated quality of a batch of wine, given some of the machine-measured chemical and physical properties of that batch.
+
+Fitting a random forest model is exactly the same as fitting a generalized linear regression model, as you did in the previous chapter. You simply change the method argument in the train function to be "ranger". The ranger package is a rewrite of R's classic randomForest package and fits models much faster, but gives almost exactly the same results. We suggest that all beginners use the ranger package for random forest modeling.
+
+Instructions
+
+Train a random forest called model on the wine quality dataset, wine, such that quality is the response variable and all other variables are explanatory variables.
+Use method = "ranger".
+Use a tuneLength of 1.
+Use 5 CV folds.
+Print model to the console.
+
+```{r}
+
+# Fit random forest: model
+model <- train(
+  quality~.,
+  tuneLength = 1,
+  data = wine, 
+  method = "ranger",
+  trControl = trainControl(
+    method = "cv", 
+    number = 5, 
+    verboseIter = TRUE
+  )
+)
+
+# Print model to console
+model
+```
+
+# Try a longer tune length
+Recall from the video that random forest models have a primary tuning parameter of mtry, which controls how many variables are exposed to the splitting search routine at each split. For example, suppose that a tree has a total of 10 splits and mtry = 2. This means that there are 10 samples of 2 predictors each time a split is evaluated.
+
+Use a larger tuning grid this time, but stick to the defaults provided by the train() function. Try a tuneLength of 3, rather than 1, to explore some more potential models, and plot the resulting model using the plot function.
+
+Instructions
+
+Train a random forest model, model, using the wine dataset on the quality variable with all other variables as explanatory variables. (This will take a few seconds to run, so be patient!)
+Use method = "ranger".
+Change the tuneLength to 3.
+Use 5 CV folds.
+Print model to the console.
+Plot the model after fitting it.
+
+```{r}
+
+# Fit random forest: model
+model <- train(
+  quality~.,
+  tuneLength = 3,
+  data = wine, 
+  method = "ranger",
+  trControl = trainControl(
+    method = "cv", 
+    number = 5, 
+    verboseIter = TRUE
+  )
+)
+
+# Print model to console
+model
+
+# Plot model
+plot(model)
+```
+
+# Fit a random forest with custom tuning
+Now that you've explored the default tuning grids provided by the train() function, let's customize your models a bit more.
+
+You can provide any number of values for mtry, from 2 up to the number of columns in the dataset. In practice, there are diminishing returns for much larger values of mtry, so you will use a custom tuning grid that explores 2 simple models (mtry = 2 and mtry = 3) as well as one more complicated model (mtry = 7).
+
+Instructions 1/2
+
+Define a custom tuning grid.
+Set the number of variables to possibly split at each node, .mtry, to a vector of 2, 3, and 7.
+Set the rule to split on, .splitrule, to "variance".
+Set the minimum node size, .min.node.size, to 5.
+
+Instructions 2/2
+
+Train another random forest model, model, using the wine dataset on the quality variable with all other variables as explanatory variables.
+Use method = "ranger".
+Use the custom tuneGrid.
+Use 5 CV folds.
+Print model to the console.
+Plot the model after fitting it using plot().
+
+```{r}
+# From previous step
+tuneGrid <- data.frame(
+  .mtry = c(2, 3, 7),
+  .splitrule = "variance",
+  .min.node.size = 5
+)
+
+# Fit random forest: model
+model <- train(
+  quality ~ .,
+  tuneGrid = tuneGrid,
+  data = wine, 
+  method = "ranger",
+  trControl = trainControl(
+    method = "cv", 
+    number = 5, 
+    verboseIter = TRUE
+  )
+)
+
+# Print model to console
+model
+
+# Plot model
+plot(model)
+```
+
+# Make a custom trainControl
+The wine quality dataset was a regression problem, but now you are looking at a classification problem. This is a simulated dataset based on the "don't overfit" competition on Kaggle a number of years ago.
+
+Classification problems are a little more complicated than regression problems because you have to provide a custom summaryFunction to the train() function to use the AUC metric to rank your models. Start by making a custom trainControl, as you did in the previous chapter. Be sure to set classProbs = TRUE, otherwise the twoClassSummary for summaryFunction will break.
+
+Instructions
+
+Make a custom trainControl called myControl for classification using the trainControl function.
+
+Use 10 CV folds.
+Use twoClassSummary for the summaryFunction.
+Be sure to set classProbs = TRUE.
+
+```{r}
+
+# Create custom trainControl: myControl
+myControl <- trainControl(
+  method = "cv", 
+  number = 10,
+  summaryFunction = twoClassSummary,
+  classProbs = TRUE, # IMPORTANT!
+  verboseIter = TRUE
+)
+```
+
+```{r}
+# Fit glmnet model: model
+model <- train(
+  y ~ ., 
+  overfit,
+  method = "glmnet",
+  trControl = myControl
+)
+
+# Print model to console
+model
+
+# Print maximum ROC statistic
+max(model[["results"]][["ROC"]])
+```
+
+# glmnet with custom trainControl and tuning
+As you saw in the video, the glmnet model actually fits many models at once (one of the great things about the package). You can exploit this by passing a large number of lambda values, which control the amount of penalization in the model. train() is smart enough to only fit one model per alpha value and pass all of the lambda values at once for simultaneous fitting.
+
+My favorite tuning grid for glmnet models is:
+
+expand.grid(
+  alpha = 0:1,
+  lambda = seq(0.0001, 1, length = 100)
+)
+This grid explores a large number of lambda values (100, in fact), from a very small one to a very large one. (You could increase the maximum lambda to 10, but in this exercise 1 is a good upper bound.)
+
+If you want to explore fewer models, you can use a shorter lambda sequence. For example, lambda = seq(0.0001, 1, length = 10) would fit 10 models per value of alpha.
+
+You also look at the two forms of penalized models with this tuneGrid: ridge regression and lasso regression. alpha = 0 is pure ridge regression, and alpha = 1 is pure lasso regression. You can fit a mixture of the two models (i.e. an elastic net) using an alpha between 0 and 1. For example, alpha = 0.05 would be 95% ridge regression and 5% lasso regression.
+
+In this problem you'll just explore the 2 extremes ¨C pure ridge and pure lasso regression ¨C for the purpose of illustrating their differences.
+
+
+Instructions
+
+Train a glmnet model on the overfit data such that y is the response variable and all other variables are explanatory variables. Make sure to use your custom trainControl from the previous exercise (myControl). Also, use a custom tuneGrid to explore alpha = 0:1 and 20 values of lambda between 0.0001 and 1 per value of alpha.
+Print model to the console.
+Print the max() of the ROC statistic in model[["results"]]. You can access it using model[["results"]][["ROC"]].
+
+```{r}
+# Train glmnet with custom trainControl and tuning: model
+model <- train(
+  y ~ ., 
+  overfit,
+  tuneGrid = expand.grid(
+    alpha = 0:1,
+    lambda = seq(0.0001, 1, length = 20)
+  ),
+  method = "glmnet",
+  trControl = myControl
+)
+
+# Print model to console
+model
+
+# Print maximum ROC statistic
+max(model[["results"]][["ROC"]])
+```
+
