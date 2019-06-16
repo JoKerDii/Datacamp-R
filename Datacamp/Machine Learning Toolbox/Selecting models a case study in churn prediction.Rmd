@@ -1,0 +1,35 @@
+---
+title: 'Machine Learning Toolbox_Selecting models: a case study in churn prediction'
+author: "dizhen"
+date: "2019Äê6ÔÂ16ÈÕ"
+output: html_document
+---
+# Make custom train/test indices
+As you saw in the video, for this chapter you will focus on a real-world dataset that brings together all of the concepts discussed in the previous chapters.
+
+The churn dataset contains data on a variety of telecom customers and the modeling challenge is to predict which customers will cancel their service (or churn).
+
+In this chapter, you will be exploring two different types of predictive models: glmnet and rf, so the first order of business is to create a reusable trainControl object you can use to reliably compare them.
+
+Instructions
+
+churn_x and churn_y are loaded in your workspace.
+
+Use createFolds() to create 5 CV folds on churn_y, your target variable for this exercise.
+Pass them to trainControl() to create a reusable trainControl for comparing models.
+
+```{r}
+
+# Create custom indices: myFolds
+myFolds <- createFolds(churn_y, k = 5)
+
+# Create reusable trainControl object: myControl
+myControl <- trainControl(
+  summaryFunction = twoClassSummary,
+  classProbs = TRUE, # IMPORTANT!
+  verboseIter = TRUE,
+  savePredictions = TRUE,
+  index = myFolds
+)
+```
+

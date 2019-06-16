@@ -1,0 +1,196 @@
+---
+title: "Machine Learning Toolbox_Preprocessing your data"
+author: "dizhen"
+date: "2019Äê6ÔÂ15ÈÕ"
+output: html_document
+---
+# Apply median imputation
+
+In this chapter, you'll be using a version of the Wisconsin Breast Cancer dataset. This dataset presents a classic binary classification problem: 50% of the samples are benign, 50% are malignant, and the challenge is to identify which are which.
+
+This dataset is interesting because many of the predictors contain missing values and most rows of the dataset have at least one missing value. This presents a modeling challenge, because most machine learning algorithms cannot handle missing values out of the box. For example, your first instinct might be to fit a logistic regression model to this data, but prior to doing this you need a strategy for handling the NAs.
+
+Fortunately, the train() function in caret contains an argument called preProcess, which allows you to specify that median imputation should be used to fill in the missing values. In previous chapters, you created models with the train() function using formulas such as y ~ .. An alternative way is to specify the x and y arguments to train(), where x is an object with samples in rows and features in columns and y is a numeric or factor vector containing the outcomes. Said differently, x is a matrix or data frame that contains the whole dataset you'd use for the data argument to the lm() call, for example, but excludes the response variable column; y is a vector that contains just the response variable column.
+
+For this exercise, the argument x to train() is loaded in your workspace as breast_cancer_x and y as breast_cancer_y.
+
+Instructions
+
+Use the train() function to fit a glm model called median_model to the breast cancer dataset. Use preProcess = "medianImpute" to handle the missing values.
+Print median_model to the console.
+
+```{r}
+# Apply median imputation: median_model
+median_model <- train(
+  x = breast_cancer_x, 
+  y = breast_cancer_y,
+  method = "glm",
+  trControl = myControl,
+  preProcess = "medianImpute"
+)
+
+# Print median_model to console
+median_model
+```
+
+
+#Use KNN imputation
+In the previous exercise, you used median imputation to fill in missing values in the breast cancer dataset, but that is not the only possible method for dealing with missing data.
+
+An alternative to median imputation is k-nearest neighbors, or KNN, imputation. This is a more advanced form of imputation where missing values are replaced with values from other rows that are similar to the current row. While this is a lot more complicated to implement in practice than simple median imputation, it is very easy to explore in caret using the preProcess argument to train(). You can simply use preProcess = "knnImpute" to change the method of imputation used prior to model fitting.
+
+Instructions
+
+breast_cancer_x and breast_cancer_y are loaded in your workspace.
+
+Use the train() function to fit a glm model called knn_model to the breast cancer dataset.
+Use KNN imputation to handle missing values.
+
+
+```{r}
+# Apply KNN imputation: knn_model
+knn_model <- train(
+  x = breast_cancer_x, 
+  y = breast_cancer_y,
+  method = "glm",
+  trControl = myControl,
+  preProcess = "knnImpute"
+)
+
+# Print knn_model to console
+knn_model
+```
+
+#Compare KNN and median imputation
+All of the preprocessing steps in the train() function happen in the training set of each cross-validation fold, so the error metrics reported include the effects of the preprocessing.
+
+This includes the imputation method used (e.g. knnImpute or medianImpute). This is useful because it allows you to compare different methods of imputation and choose the one that performs the best out-of-sample.
+
+median_model and knn_model are available in your workspace, as is resamples, which contains the resampled results of both models. Look at the results of the models by calling
+
+dotplot(resamples, metric = "ROC")
+and choose the one that performs the best out-of-sample. Which method of imputation yields the highest out-of-sample ROC score for your glm model?
+
+KNN imputation is slightly better than median imputation.
+
+
+#Combining preprocessing methods
+The preProcess argument to train() doesn't just limit you to imputing missing values. It also includes a wide variety of other preProcess techniques to make your life as a data scientist much easier. You can read a full list of them by typing ?preProcess and reading the help page for this function.
+
+One set of preprocessing functions that is particularly useful for fitting regression models is standardization: centering and scaling. You first center by subtracting the mean of each column from each value in that column, then you scale by dividing by the standard deviation.
+
+Standardization transforms your data such that for each column, the mean is 0 and the standard deviation is 1. This makes it easier for regression models to find a good solution.
+
+Instructions 
+
+1. breast_cancer_x and breast_cancer_y are loaded in your workspace. Fit a logistic regression model using median imputation called model to the breast cancer data, then print it to the console.
+
+```{r}
+
+# Fit glm with median imputation
+model <- train(
+  x = breast_cancer_x, 
+  y = breast_cancer_y,
+  method = "glm",
+  trControl = myControl,
+  preProcess = "medianImpute"
+)
+
+# Print model
+model
+```
+
+
+2. Update the model to include two more pre-processing steps: centering and scaling.
+
+```{r}
+# Update model with standardization
+model <- train(
+  x = breast_cancer_x, 
+  y = breast_cancer_y,
+  method = "glm",
+  trControl = myControl,
+  preProcess = c("medianImpute","center","scale")
+)
+
+# Print updated model
+model
+```
+
+#Remove near zero variance predictors
+As you saw in the video, for the next set of exercises, you'll be using the blood-brain dataset. This is a biochemical dataset in which the task is to predict the following value for a set of biochemical compounds:
+
+log((concentration of compound in brain) /
+      (concentration of compound in blood))
+This gives a quantitative metric of the compound's ability to cross the blood-brain barrier, and is useful for understanding the biological properties of that barrier.
+
+One interesting aspect of this dataset is that it contains many variables and many of these variables have extemely low variances. This means that there is very little information in these variables because they mostly consist of a single value (e.g. zero).
+
+Fortunately, caret contains a utility function called nearZeroVar() for removing such variables to save time during modeling.
+
+nearZeroVar() takes in data x, then looks at the ratio of the most common value to the second most common value, freqCut, and the percentage of distinct values out of the number of total samples, uniqueCut. By default, caret uses freqCut = 19 and uniqueCut = 10, which is fairly conservative. I like to be a little more aggressive and use freqCut = 2 and uniqueCut = 20 when calling nearZeroVar().
+
+```{r}
+# Identify near zero variance predictors: remove_cols
+remove_cols <- nearZeroVar(bloodbrain_x, names = TRUE, 
+                           freqCut = 2, uniqueCut = 20)
+
+# Get all column names from bloodbrain_x: all_cols
+all_cols <- names(bloodbrain_x)
+
+# Remove from data: bloodbrain_x_small
+bloodbrain_x_small <- bloodbrain_x[ , setdiff(all_cols, remove_cols)]
+```
+
+preProcess() and nearZeroVar()
+Can you use the preProcess argument in caret to remove near-zero variance predictors? Or do you have to do this by hand, prior to modeling, using the nearZeroVar() function?
+
+#Fit model on reduced blood-brain data
+Now that you've reduced your dataset, you can fit a glm model to it using the train() function. This model will run faster than using the full dataset and will yield very similar predictive accuracy.
+
+Furthermore, zero variance variables can cause problems with cross-validation (e.g. if one fold ends up with only a single unique value for that variable), so removing them prior to modeling means you are less likely to get errors during the fitting process.
+
+Instructions
+
+bloodbrain_x, bloodbrain_y, remove, and bloodbrain_x_small are loaded in your workspace.
+
+Fit a glm model using the train() function and the reduced blood-brain dataset you created in the previous exercise.
+Print the result to the console.
+```{r}
+# Fit model on reduced data: model
+model <- train(
+  x = bloodbrain_x_small, 
+  y = bloodbrain_y, 
+  method = "glm"
+)
+
+# Print model to console
+model
+```
+
+#Using PCA as an alternative to nearZeroVar()
+An alternative to removing low-variance predictors is to run PCA on your dataset. This is sometimes preferable because it does not throw out all of your data: many different low variance predictors may end up combined into one high variance PCA variable, which might have a positive impact on your model's accuracy.
+
+This is an especially good trick for linear models: the pca option in the preProcess argument will center and scale your data, combine low variance variables, and ensure that all of your predictors are orthogonal. This creates an ideal dataset for linear regression modeling, and can often improve the accuracy of your models.
+
+Instructions
+
+bloodbrain_x and bloodbrain_y are loaded in your workspace.
+
+Fit a glm model to the full blood-brain dataset using the "pca" option to preProcess.
+Print the model to the console and inspect the result.
+
+```{r}
+# Fit glm model using PCA: model
+model <- train(
+  x = bloodbrain_x, 
+  y = bloodbrain_y,
+  method = "glm", 
+  preProcess = "pca"
+)
+
+# Print model to console
+model
+```
+
+
