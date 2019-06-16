@@ -33,3 +33,117 @@ myControl <- trainControl(
 )
 ```
 
+# Fit the baseline model
+Now that you have a reusable trainControl object called myControl, you can start fitting different predictive models to your churn dataset and evaluate their predictive accuracy.
+
+You'll start with one of my favorite models, glmnet, which penalizes linear and logistic regression models on the size and number of coefficients to help prevent overfitting.
+
+Instructions
+
+Fit a glmnet model to the churn dataset called model_glmnet. Make sure to use myControl, which you created in the first exercise and is available in your workspace, as the trainControl object.
+
+```{r}
+# Fit glmnet model: model_glmnet
+model_glmnet <- train(
+  x = churn_x, 
+  y = churn_y,
+  metric = "ROC",
+  method = "glmnet",
+  trControl = myControl
+)
+```
+
+#Random forest with custom trainControl
+Another one of my favorite models is the random forest, which combines an ensemble of non-linear decision trees into a highly flexible (and usually quite accurate) model.
+
+Rather than using the classic randomForest package, you'll be using the ranger package, which is a re-implementation of randomForest that produces almost the exact same results, but is faster, more stable, and uses less memory. I highly recommend it as a starting point for random forest modeling in R.
+
+```{r}
+# Fit random forest: model_rf
+model_rf <- train(
+  x = churn_x, 
+  y = churn_y,
+  metric = "ROC",
+  method = "ranger",
+  trControl = myControl
+)
+```
+
+# Create a resamples object
+Now that you have fit two models to the churn dataset, it's time to compare their out-of-sample predictions and choose which one is the best model for your dataset.
+
+You can compare models in caret using the resamples() function, provided they have the same training data and use the same trainControl object with preset cross-validation folds. resamples() takes as input a list of models and can be used to compare dozens of models at once (though in this case you are only comparing two models).
+
+Instructions
+
+model_glmnet and model_rf are loaded in your workspace.
+
+Create a list() containing the glmnet model as item1 and the ranger model as item2.
+Pass this list to the resamples() function and save the resulting object as resamples.
+Summarize the results by calling summary() on resamples.
+
+```{r}
+# Create model_list
+model_list <- list(item1 = model_glmnet, item2 = model_rf)
+
+# Pass model_list to resamples(): resamples
+resamples <- resamples(model_list)
+
+# Summarize the results
+summary(resamples)
+```
+
+# Create a box-and-whisker plot
+caret provides a variety of methods to use for comparing models. All of these methods are based on the resamples() function. My favorite is the box-and-whisker plot, which allows you to compare the distribution of predictive accuracy (in this case AUC) for the two models.
+
+In general, you want the model with the higher median AUC, as well as a smaller range between min and max AUC.
+
+You can make this plot using the bwplot() function, which makes a box and whisker plot of the model's out of sample scores. Box and whisker plots show the median of each distribution as a line and the interquartile range of each distribution as a box around the median line. You can pass the metric = "ROC" argument to the bwplot() function to show a plot of the model's out-of-sample ROC scores and choose the model with the highest median ROC.
+
+If you do not specify a metric to plot, bwplot() will automatically plot 3 of them.
+
+Instructions
+
+Pass the resamples object to the bwplot() function to make a box-and-whisker plot. Look at the resulting plot and note which model has the higher median ROC statistic. Be sure to specify which metric you want to plot.
+
+```{r}
+# Create bwplot
+bwplot(resamples,metric = "ROC")
+```
+
+# Create a scatterplot
+Another useful plot for comparing models is the scatterplot, also known as the xy-plot. This plot shows you how similar the two models' performances are on different folds.
+
+It's particularly useful for identifying if one model is consistently better than the other across all folds, or if there are situations when the inferior model produces better predictions on a particular subset of the data.
+
+Instructions
+
+Pass the resamples object to the xyplot() function. Look at the resulting plot and note how similar the two models' predictions are (or are not) on the different folds. Be sure to specify which metric you want to plot.
+
+```{r}
+
+# Create xyplot
+xyplot(resamples,metric = "ROC")
+```
+
+# Ensembling models
+That concludes the course! As a teaser for a future course on making ensembles of caret models, I'll show you how to fit a stacked ensemble of models using the caretEnsemble package.
+
+caretEnsemble provides the caretList() function for creating multiple caret models at once on the same dataset, using the same resampling folds. You can also create your own lists of caret models.
+
+In this exercise, I've made a caretList for you, containing the glmnet and ranger models you fit on the churn dataset. Use the caretStack() function to make a stack of caret models, with the two sub-models (glmnet and ranger) feeding into another (hopefully more accurate!) caret model.
+
+Instructions
+
+Call the caretStack() function with two arguments, model_list and method = "glm", to ensemble the two models using a logistic regression. Store the result as stack.
+Summarize the resulting model with the summary() function.
+
+```{r}
+
+# Create ensemble model: stack
+stack <- caretStack(model_list, method = 'glm')
+
+# Look at summary
+summary(stack)
+```
+
