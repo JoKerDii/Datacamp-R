@@ -1,0 +1,194 @@
+---
+title: "Hyperparameter tuning in R_Hyperparameter tuning with caret"
+author: "dizhen"
+date: "2019Äê6ÔÂ17ÈÕ"
+output: html_document
+---
+# Cartesian grid search in caret
+In chapter 1, you learned how to use the expand.grid() function to manually define hyperparameters. The same function can also be used to define a grid of hyperparameters.
+
+The voters_train_data dataset has already been preprocessed to make it a bit smaller so training will run faster; it has now 80 observations and balanced classes and has been loaded for you. The caret and tictoc packages have also been loaded and the trainControl object has been defined with repeated cross-validation:
+```{r}
+fitControl <- trainControl(method = "repeatedcv",
+                           number = 3,
+                           repeats = 5)
+```
+
+
+Instruction
+
+1. Define a Cartesian grid of Support Vector Machine hyperparameters with the following combinations: degree should be 1, 2, or 3, scale should be 0.1, 0.01 or 0.001 and C should be held constant at 0.5.
+
+2. Use the Cartesian grid you defined in the previous step to train a Support Vector Machines with Polynomial Kernel in caret.
+```{r}
+# Define Cartesian grid
+man_grid <- expand.grid(degree = c(1, 2, 3), 
+                        scale = c(0.1, 0.01, 0.001), 
+                        C = 0.5)
+
+# Start timer, set seed & train model
+tic()
+set.seed(42)
+svm_model_voters_grid <- train(turnout16_2016 ~ ., 
+                   data = voters_train_data, 
+                   method = "svmPoly", 
+                   trControl = fitControl,
+                   verbose= FALSE,
+                   tuneGrid = man_grid)
+toc()
+```
+
+# Plot hyperparameter model output
+In the previous exercise, you defined a Cartesian grid of hyperparameters and used it to train a Support Vector Machine model. The same code as before has been run in the background, so you can directly work with the svm_model_voters_grid model object. The caret package has also been loaded.
+
+Instruction
+
+1. Plot the model object with default arguments: Accuracy and line-plot.
+
+2. Add another plot where you plot Kappa values and use a level-plot.
+
+
+```{r}
+# Plot default
+plot(svm_model_voters_grid)
+
+# Plot Kappa level-plot
+plot(svm_model_voters_grid, metric = "Kappa", plotType = "level")
+```
+
+# Grid search with range of hyperparameters
+In chapter 1, you learned how to use the expand.grid() function to manually define a set of hyperparameters. The same function can also be used to define a grid with ranges of hyperparameters.
+
+The voters_train_data dataset has been loaded for you, as have the caret and tictoc packages.
+
+Instruction
+
+1. Define a grid with the neural network hyperparameter size ranging from 1 to 5 with a step-size of 1.
+
+2. Specifically define the trainControl function to perform grid search.
+
+```{r}
+# Define the grid with hyperparameter ranges
+big_grid <- expand.grid(size = seq(from = 1, to = 5, by = 1), decay = c(0, 1))
+
+# Train control with grid search
+fitControl <- trainControl(method = "repeatedcv",
+                           number = 3,
+                           repeats = 5,
+                           search = "grid")
+```
+3. Train a regular Neural Network in caret.
+
+```{r}
+# Define the grid with hyperparameter ranges
+big_grid <- expand.grid(size = seq(from = 1, to = 5, by = 1), decay = c(0, 1))
+
+# Train control with grid search
+fitControl <- trainControl(method = "repeatedcv", number = 3, repeats = 5, search = "grid")
+
+# Train neural net
+tic()
+set.seed(42)
+nn_model_voters_big_grid <- train(turnout16_2016 ~ ., 
+                   data = voters_train_data, 
+                   method = "nnet", 
+                   trControl = fitControl,
+                   verbose = FALSE)
+toc()
+```
+
+4. And finally: feed the big_grid to this Neural Network for tuning.
+
+
+```{r}
+# Define the grid with hyperparameter ranges
+big_grid <- expand.grid(size = seq(from = 1, to = 5, by = 1), decay = c(0, 1))
+
+# Train control with grid search
+fitControl <- trainControl(method = "repeatedcv", number = 3, repeats = 5, search = "grid")
+
+# Train neural net
+tic()
+set.seed(42)
+nn_model_voters_big_grid <- train(turnout16_2016 ~ ., 
+                   data = voters_train_data, 
+                   method = "nnet", 
+                   trControl = fitControl,
+                   verbose = FALSE,
+                   tuneGrid = big_grid)
+toc()
+```
+
+#Random search with caret
+Now you are going to perform a random search instead of grid search!
+
+As before, the small voters_train_data dataset has been loaded for you, as have the caret and tictoc packages.
+
+Instruction
+
+1.Define a training control object with random search.
+
+```{r}
+# Train control with random search
+fitControl <- trainControl(method = "repeatedcv",
+                           number = 3,
+                           repeats = 5,
+                           search = "random")
+```
+ 
+ 2. Compare six random hyperparameter combinations in the neural network below.
+ 
+```{r}
+# Train control with random search
+fitControl <- trainControl(method = "repeatedcv",
+                           number = 3,
+                           repeats = 5,
+                           search = "random")
+
+# Test 6 random hyperparameter combinations
+tic()
+nn_model_voters_big_grid <- train(turnout16_2016 ~ ., 
+                   data = voters_train_data, 
+                   method = "nnet", 
+                   trControl = fitControl,
+                   verbose = FALSE,
+                   tuneLength = 6)
+toc()
+```
+ 
+# Adaptive Resampling with caret
+Now you are going to train a model on the voter's dataset using Adaptive Resampling!
+
+As before, the small voters_train_data dataset has been loaded for you, as have the caret and tictoc packages.
+
+Instructions
+
+1. Define a trainControl() function for performing Adaptive Resampling with 3x3 repeated cross-validation.
+
+2. Change the resampling scheme from the default grid method to random search for Adaptive Resampling.
+
+3. Define the Adaptive Resampling options minimum number of resamples as 3 and use the Bradley Terry method.
+
+4. Change the maximum number of tuning parameter combinations that will be generated by random search from its default of 3 to 6 and train the Neural Network.
+
+
+
+```{r}
+
+# Define trainControl function
+fitControl <- trainControl(method = "adaptive_cv",
+                           number = 3, repeats = 3,
+                           adaptive = list(min = 3, alpha = 0.05, method = "BT", complete = FALSE),
+                           search = "random")
+
+# Start timer & train model
+tic()
+svm_model_voters_ar <- train(turnout16_2016 ~ ., 
+                   data = voters_train_data, 
+                   method = "nnet", 
+                   trControl = fitControl,
+                   verbose = FALSE,
+                   tuneLength = 6)
+toc()
+```
+
