@@ -1,0 +1,223 @@
+---
+title: "Intermediate Interactive Data Visualization with plotly in R_Animating graphics"
+author: "dizhen"
+date: "2019Äê6ÔÂ19ÈÕ"
+output: html_document
+---
+#Animating a scatterplot
+Your task is to create an animated bubble chart of the state-level housing price index against real GDP from 1997 to 2017. Can you see the impact of the recession on the housing market?
+
+The us_economy data set and plotly are already loaded into your R session.
+
+Instructions
+
+Create an animated scatterplot over the years with gdp on the x-axis and house_price on the y-axis.
+Color the markers by region.
+Make the diameter of the markers proportional to the population.
+
+```{r}
+# Create an animated bubble chart of house_price against gdp
+us_economy %>%
+  plot_ly(x = ~gdp, y = ~house_price) %>%
+  add_markers(size = ~population, color = ~region,
+      frame = ~year, ids = ~state,
+      marker = list(sizemode = "diameter"))
+```
+
+# Factors as frames
+Time is not the only type of variable that can be used to specify the frames of an animation. You can also create an animation that cycles through subplots created by factors rather than using a grid layout.
+
+In this exercise, you will adapt your answer from the previous question to create an animation that cycles through bubble charts for each region in 2017.
+
+Note: The default settings for the animation make it go very quickly. In the next lesson, you'll learn how to adjust the speed. For now, you can use the slider bar to navigate between regions if you want to investigate the relationships.
+
+plotly and the us_economy data set have already been loaded.
+
+Instructions
+
+Complete the code to animate a bubble chart of house_price against gdp across regions of the U.S. Specifically,
+
+filter out the data for 2017,
+and change the appropriate aesthetic to allow region to define each snapshot in the animation.
+
+```{r}
+# Animate a bubble chart of house_price against gdp over region
+us_economy %>%
+  filter(year == 2017) %>%
+  plot_ly(x = ~gdp, y = ~house_price) %>%
+  add_markers(size = ~population, color = ~region, 
+              frame = ~region, ids = ~state,
+              marker = list(sizemode = "diameter"))
+```
+
+
+# Polishing your regional animation
+In lesson 1, you created an animation that cycled through bubble charts of the housing price index against real GDP by region. In this exercise, your task is to polish that animation.
+
+The animation you generated in the last chapter is stored as the object ani, and plotly has already been loaded for you.
+
+A full list of the easing options can be found in here. Notice that you can append -in, -out, and -in-out to the easing options outlined in the lesson to further customize the transitions between frames.
+
+Instructions 
+1. Change the animation options so that each transition takes 300 milliseconds and each frame is displayed for 1700 milliseconds after the transition.
+2. There are many different transitions supported by plotly. In the lesson, you saw an example of a "bounce" transition. Change the type of transition to "elastic"
+3. Remove the prefix from the slider text and change the font color to "red".
+4. The x- and y-axes should both have polished labels. Use the layout() command to set the x-axis title to "Real GDP (millions USD)", and to set the y-axis title to "Housing price index".
+
+```{r}
+# Polish the x- and y-axis titles
+ani %>% 
+   animation_opts(
+     frame = 2000, 
+     transition = 300, 
+     easing = "elastic"
+   ) %>%
+   animation_slider(
+     currentvalue = list(
+       prefix = NULL, 
+       font = list(color = "red")
+     )
+   ) %>%
+   layout(
+     xaxis =  list(title = "Real GDP (millions USD)"),
+     yaxis =  list(title = "Housing price index")
+```
+
+# Polishing your HPI animation
+In this exercise, you will polish the bubble chart of housing price index against real GDP that you created in the last lesson.
+
+1. Set the x-axis title to "Real GDP (millions USD)", the y-axis title to "Housing price index", and apply a log transformation to the x-axis.
+
+```{r}
+# Polish the axis titles and log-transform the x-axis
+us_economy %>%
+  plot_ly(x = ~gdp, y = ~house_price) %>%
+  add_markers(
+    size = ~population, color = ~region, 
+    frame = ~year, ids = ~state,
+    marker = list(sizemode = "diameter")
+  ) %>%
+  layout(
+    xaxis = list(title = "Real GDP (millions USD)", type = "log"),
+    yaxis = list(title = "Housing price index")
+  )
+```
+2. Reduce the size of the bubble by setting sizeref to 3. (Recall that values larger than 1 result in smaller points while values smaller than 1 result in larger points.)
+
+```{r}
+# Reduce the bubble size
+us_economy %>%
+  plot_ly(x = ~gdp, y = ~house_price) %>%
+  add_markers(
+    size = ~population, color = ~region, 
+    frame = ~year, ids = ~state,
+    marker = list(sizemode = "diameter", sizeref = 3)
+  ) %>%
+  layout(
+    xaxis = list(title = "Real GDP (millions USD)", type = "log"),
+    yaxis = list(title = "Housing price index")
+  )
+```
+3. Change the hover info so that it prints the state name by adding hoverinfo and text arguments to the plot_ly() command.
+
+```{r}
+# Map state names to the hover info text
+us_economy %>%
+  plot_ly(
+    x = ~gdp, y = ~house_price,
+    hoverinfo = "text", text = ~state
+  ) %>%
+  add_markers(
+    size = ~population, color = ~region, 
+    frame = ~year, ids = ~state,
+    marker = list(sizemode = "diameter", sizeref = 3)
+  ) %>%
+  layout(
+    xaxis = list(title = "Real GDP (millions USD)", type = "log"),
+    yaxis = list(title = "Housing price index")
+  )
+```
+
+# Adding background text
+In the previous lesson, you polished your animated bubble chart of housing price index against real GDP. In this exercise, you will continue to polish this graphic by displaying the year in the background of the animation.
+
+Instructions
+
+Add the year as background text. You should center the text at the point (200000, 450), set the font color to gray80, and set the font size to 150.
+
+Use animation_slider() to hide the slider.
+
+```{r}
+# Add the year as background text and remove the slider
+us_economy %>%
+  plot_ly(x = ~gdp, y = ~house_price, hoverinfo = "text", text = ~state) %>%
+  add_text(x = 200000, y = 450, text = ~year, frame = ~year,
+           textfont = list(color = toRGB("gray80"), size = 150)) %>%
+  add_markers(size = ~population, color = ~region, 
+              frame = ~year, ids = ~state,
+              marker = list(sizemode = "diameter", sizeref = 3)) %>%
+  layout(xaxis = list(title = "Real GDP (millions USD)", type = "log"),
+         yaxis = list(title = "Housing price index")) %>%
+  animation_slider(hide = TRUE)
+```
+
+# Plotting the baseline
+You can use different data sets for different layers in plotly, just like you can in ggplot2. This is a useful strategy when you want to display a baseline time point (or group) in an animation. In this exercise, your task is to create an animated scatterplot of housing price index against real GDP, keeping the 1997 data points in the background.
+
+```{r}
+
+# extract the 1997 data
+us1997 <- us_economy %>%
+  filter(year == 1997)
+
+# create an animated scatterplot with baseline from 1997
+us_economy %>%
+  plot_ly(x = ~gdp, y = ~house_price) %>%
+  add_markers(data = us1997, marker = list(color = toRGB("gray60"), opacity = 0.5)) %>%
+  add_markers(frame = ~year, ids = ~state, data = us_economy, showlegend = FALSE, alpha = 0.5) %>%
+  layout(xaxis = list(type = "log"))
+```
+
+# Median life expectancies
+In the next exercise, you will create a cumulative time series of the median housing price index in each region. In order to do this, you must first calculate the median housing price index in each year for each region.
+
+Use the dplyr package to complete this task.
+
+Instruction
+
+Find the median housing price index (house_price) for each region within each year using group_by() and summarize().
+Name the new variable median_hpi.
+
+```{r}
+# dplyr has already been loaded
+
+# Find median life HPI for each region in each year
+us_economy %>%
+  group_by(region, year) %>%
+  summarize(median_hpi = median(house_price))
+```
+
+# Animating median life expectancies
+The data frame of median HPI for region in each year you created in the previous exercise is stored as the object med_hpi.
+
+In this exercise, you will work through the steps to create a cumulative time series animation displaying how the median HPI for each region has changed over time.
+
+Note that plotly, dplyr, and purrr have been loaded for you.
+
+Instruction
+
+1. Split the med_lifex data frame by year.
+2. Create a list of cumulative data frames for each year by accumulating the data frames (i.e. recursively row binding the data frames) in the list created by split().
+3. Assign the names 1997:2017 to the list of data frames using set_names().
+4.Bind the list of data frames into a single data frame. Be sure to add a frame column specifying an id corresponding to each data frame in the list.
+```{r}
+# Animate the cumulative time series of median HPI over time
+med_hpi %>%
+  split(.$year) %>%
+  accumulate(~bind_rows(.x, .y)) %>%
+  set_names(1997:2017) %>%
+  bind_rows(.id = "frame") %>%
+  plot_ly(x = ~year, y = ~median_hpi, color = ~region) %>%
+  add_lines(frame = ~frame)
+```
+
