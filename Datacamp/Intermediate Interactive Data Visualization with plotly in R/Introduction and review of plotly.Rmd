@@ -1,0 +1,185 @@
+---
+title: "Intermediate Interactive Data Visualization with plotly in R_Introduction and review of plotly"
+author: "dizhen"
+date: "2019Äê6ÔÂ17ÈÕ"
+output: html_document
+---
+# A simple time series plot
+Your task is to create an interactive time series plot of the opening price of the MSCI All Country World Index, instead of the closing price previously plotted.
+
+Remember that the msci data set contains daily information on the trading price of the iShares MSCI All Country World Index ETF including:
+
+Date: the date
+Open: opening price
+High: high price
+Low: low price
+Close: closing price
+Volume: number of trades¨B
+Adjusted: adjusted closing price
+
+After you create the plot, play around with it! Explore the ways that you can interact with plots in plotly, such as "Pan", "Zoom", and "Toggle Spike Lines".
+
+Instructions
+
+Load the plotly package.
+Fill in the code to create an interactive time series plot with Open on the y-axis and Date on the x-axis.
+
+
+```{r}
+# load the plotly package
+library(plotly)
+
+# Change the code below to create a times series plot of Open
+acwi %>% 
+    plot_ly(x = ~Date, y = ~Open) %>%
+    add_lines()
+```
+
+# A simple scatterplot
+Now that you have created a time series plot, your task is to create an interactive scatterplot of the trading volume against the date.
+
+The plotly package and acwi data set have already been loaded for you.
+
+Instructions
+
+Create a scatterplot of the trading Volume (on the y-axis) against the Date (on the x-axis).
+
+```{r}
+# Create a scatterplot with Date on the x-axis 
+# and Volume on the y-axis
+acwi %>% 
+  plot_ly(x = ~Date, y = ~Volume) %>%
+  add_markers()
+```
+# Color and size
+In this example, you will continue exploring the World Happiness Report data set. So far you have explored how the relationship between happiness and life expectancy is mediated by income class and population. Your task is to explore how the region of the world mediates this relationship.
+
+plotly has already been loaded for you, so there is no need to load it again.
+
+After you create your graphic, be sure to explore the interactivity!
+
+Instructions
+Create a scatterplot of happiness (on the y-axis) against life.expectancy (on the x-axis).
+Use color to represent the region, and the size of the glyphs to represent log.gdp.
+
+```{r}
+# Create a coded scatterplot of happiness vs. life.expectancy
+happy %>%
+  plot_ly(y = ~happiness, x = ~life.expectancy) %>%
+  add_markers(color = ~region, size = ~log.gdp)
+```
+
+# Plotting symbols
+Recall that plotly allows you to customize the plotting symbols used through the symbols argument to add_markers(). Both numeric and character specifications of symbols are permitted. For example, 100 denotes an open circle which can also be specified as "circle-open".
+
+To manually specify the scale for, say, three levels you can specify symbols = c("circle", "triangle", "x") to ensure that the groups are represented by circles, triangles, and x's, in that order.
+
+Here's the full list of valid plotting symbols for your reference.
+
+In this exercise, you'll change the plotting symbols for the income categories.
+
+plotly and the happy data set have already been loaded for you.
+
+Instructions
+
+Change the plotting symbols for income categories according to the following scheme:
+low: "circle-open"; lower-middle: "square-open"; upper-middle: "star-open"; high: "x-thin-open"
+
+```{r}
+
+# Fill in the specified plotting symbols
+happy %>%
+  plot_ly(x = ~life.expectancy, y = ~happiness) %>%
+  add_markers(symbol = ~income, symbols = c("circle-open", "square-open", "star-open", "x-thin-open"))
+```
+
+# Polishing your graphics
+The below code chunk produces an interactive plot of national happiness against an index for social support, where plotting symbols represent the income classification of the country.
+
+```{r}
+happy %>%
+  plot_ly(x = ~social.support, y = ~happiness,
+  hoverinfo = "text",
+  text = ~paste("Country: ", country)) %>%
+  add_markers(symbol = ~income, symbols = c("circle-open", "square-open", "star-open", "x-thin-open"))
+```
+
+Your task is to edit the hover information and axis labels so that your reader can more-easily digest the information.
+
+plotly and the happy data set have been loaded for you.
+
+Instructions
+
+Add hover information for the income group, happiness score, and the social.support index.
+Use round(<variable>, 2) to round all numeric variables to two decimal places in the hover info.
+Change the x-axis label to "Social support index" and the y-axis label to "National happiness score".
+
+```{r}
+# Complete the following code to polish the plot
+happy %>%
+  plot_ly(x = ~social.support, y = ~happiness,
+  hoverinfo = "text",
+  text = ~paste("Country: ", country,
+  "<br> Income: ", income,
+  "<br> Happiness: ", round(happiness, 2),
+  "<br> Social support: ", round(social.support, 2))) %>%
+  add_markers(symbol = ~income, 
+              symbols = c("circle-open", "square-open", "star-open", "x-thin-open")) %>%
+  layout(xaxis = list(title = "Social support index"),
+         yaxis = list(title = "National happiness score"))
+```
+
+# Bubble charts
+To begin your exploration of the U.S. economic index data set, your task is to create a bubble chart of of the housing price index against real GDP. Further, you will add color to represent the region of the U.S. to explore potential regional clustering.
+
+Throughout this exercise, you will also explore how changing the sizemode of the marker argument can help polish the plot.
+
+plotly, dplyr, and the us_economy data set have already been loaded.
+
+Instruction
+
+1. Extract only the 2017 data.
+2. Create a scatterplot of the housing price index (house_price) against GDP (gdp) for 2017. Use color to represent the region and make the size of the points proportional to the population of the state.
+
+```{r}
+# Create a bubble chart of house_price vs. gdp
+us_economy %>%
+  filter(year == 2017) %>%
+  plot_ly(x = ~gdp, y = ~house_price) %>%
+  add_markers(size = ~population, color = ~region)
+```
+
+3. Make the population proportional to the "diameter" of the points by changing the sizemode.
+
+```{r}
+# Change the sizemode so that size refers to the diameter of the points
+us_economy %>%
+  filter(year == 2017) %>%
+  plot_ly(x = ~gdp, y = ~house_price) %>%
+  add_markers(size = ~population, 
+              color = ~region, 
+              marker = list(sizemode = "diameter"))
+```
+
+# Many time series
+How did the housing price index change from 2000 to 2017 in the United States? To begin answering this question, your task is to create a line chart representing the housing price index for each state over this time period.
+
+Once you have created this plot, be sure to consider how easy or hard it is to interact with. Specifically, how easy is it to select a single state's trajectory?
+
+plotly, dplyr, and the us_economy data set have already been loaded.
+
+Instructions
+
+Filter out the data from 2000 onward.
+Next, group the data by state.
+Finally, create a time series plot displaying how the housing price index (house_price) has changed over time (year).
+```{r}
+
+# Create a line chart of house_price over time by state
+us_economy %>%
+  filter(year >= 2000) %>%
+  group_by(state) %>%
+  plot_ly(x = ~year, y = ~house_price) %>%
+  add_lines()
+```
+
