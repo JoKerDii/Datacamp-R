@@ -1,0 +1,154 @@
+---
+title: "Intermediate Interactive Data Visualization with plotly in R_Linking graphics"
+author: "dizhen"
+date: "2019Äê6ÔÂ22ÈÕ"
+output: html_document
+---
+# sharedData objects
+In previous exercises, you worked with the us_economy data set, which consists of economic indices for each state in the U.S. along with Washington D.C. from 1997 to 2017. Before you can create linked views, you must first create a new sharedData object. Which of the following commands will create the sharedData object necessary for the linked brushing of individual points between two charts?
+
+Answer:
+```{r}
+SharedData$new(us_economy)
+```
+
+# Linking scatterplots
+In this exercise, you'll use plotly and crosstalk to link a scatterplot of the U.S. Housing Price Index in 2017 (HPI) against the percentage of homeowners to a scatterplot of the 2017 HPI against the employment rate. Both packages have already been loaded, and the data are stored in us2017.
+
+Instruction
+
+Create a new SharedData object from the us2017 dataset. Store this object as shared_us.
+Create a scatterplot of the HPI in 2017 (house_price) against the percentage of homeowners (home_owners). Store this plot as p1.
+A scatterplot of the HPI against the employment rate is stored in p2. Create a row of linked scatterplots.
+Start to polish the linked scatterplots you just created by: (i) adding titles to the x-axes, (ii) adding a shared title to the y-axes, and (iii) hiding the legend.
+```{r}
+# Create a SharedData object from us2017
+shared_us <- SharedData$new(us2017)
+
+# Create a scatterplot of house_price vs. home_owners
+p1 <- shared_us %>%
+  plot_ly(x = ~home_owners, y = ~house_price) %>%
+  add_markers()
+ 
+# Scatterplot of house_price vs. employment rate
+p2 <- shared_us %>%
+  plot_ly(x = ~employment/population, y = ~house_price) %>%
+  add_markers()
+  
+# Polish the linked scatterplots
+subplot(p1, p2, titleX = TRUE, shareY = TRUE) %>% hide_legend()
+```
+
+# highlighting() charts
+As you were exploring the linked scatterplot in the previous exercise, you may have noticed that once you selected a point on the scatterplot, doubling clicking did not deselect the point. In this exercise, you will explore how to use the highlight() function to correct this issue, along with it's other options.
+
+Your linked scatterplots from the previous exercise are stored in the linked_plots object.
+
+Instructions
+
+The highlight() function allows points to be deselected. Add highlight() to your plotting pipeline to allow a click to turn on highlighting, and a double click to turn off highlighting.
+```{r}
+# Add a highlight layer
+linked_plots %>% highlight()
+```
+Change the selection event that turns on highlighting to enable linked brushing using either box selection or lasso selection.
+```{r}
+# Enable linked brushing
+linked_plots %>% highlight(on = "plotly_selected")
+```
+You can also enable linked brushing using the hover tool. To do this, specify that highlighting should be turned on by the "plotly_hover" tool.
+
+```{r}
+# Enable hover highlighting
+linked_plots %>% highlight(on = "plotly_hover")
+```
+
+# Highlighting time series data
+How did the Housing Price Index (HPI) change from 2000 to 2017 in the United States? In chapter 1 you created a basic time series plot that could start your investigation, but the inability to highlight an individual states' data was limiting. In this exercise, your task is to enable highlighting by state and investigate which states experienced the largest changes in HPI after the recession that started in December 2007.
+
+plotly and crosstalk have already been loaded, and the code used to previously create the time series plot is shown.
+
+Instructions
+
+Create a SharedData object to enable the selection of an individual states' data.
+Complete the plotting pipeline to create a time series plot of house_price against year by state.
+
+```{r}
+# Create a shared data object keyed by individual states
+state_data <- us_economy %>%
+  SharedData$new(key = ~state)
+
+# Using the shared data, plot house price vs. year
+state_data %>%
+  plot_ly(x = ~year, y = ~house_price) %>%
+  # Group by state
+  group_by(state) %>%
+  # Add lines
+  add_lines()
+```
+
+# Linking a dotplot and a time series plot
+Did each region experience a similar downturn in HPI during the "Great Recession"? To start this investigation, link your time series plot from the previous exercise to a dotplot of the average HPI value by region in 2017.
+
+The data are stored in us_economy, and plotly and crosstalk have been loaded for you.
+
+Instructions 
+
+Create a SharedData object allowing for selection by region and store it in the shared_region object.
+Using your new shared_region object, filter out rows for 2017 group the data by region, calculate the average HPI (house_price) by region, and create a dotplot of these average by region.
+The adapted code for your time series chart is stored in the ts_chart object. Link dp_chart and ts_chart in a single row.
+
+```{r}
+# Create a shared data object keyed by region
+shared_region <- SharedData$new(us_economy, key = ~region)
+
+# Create a dotplot of avg house_price by region in 2017
+dp_chart <- shared_region %>%
+  plot_ly() %>%
+  filter(year == 2017) %>%
+  group_by(region) %>%
+  summarize(avg.hpi = mean(house_price, na.rm = TRUE)) %>%
+  add_markers(x = ~avg.hpi, y = ~region)
+  
+# Code for time series plot
+ts_chart <- shared_region %>%
+  plot_ly(x = ~year, y = ~house_price) %>%
+  group_by(state) %>%
+  add_lines()
+  
+# Link dp_chart and ts_chart
+subplot(dp_chart,ts_chart)
+```
+
+# Linking a bar chart to a scatterplot
+In the lesson, you saw how to link a dotplot of summary statistics to a scatterplot, but you can link other types of charts in a similar way. In this exercise, you will link a bar chart to a bubble chart.
+
+The data are stored in us2017, and plotly and crosstalk have been loaded for you.
+
+Instruction
+
+Create a SharedData object allowing for selection by division (i.e. subregion). Store this in the shared_div object.
+Using shared_div, count() the number of cases per division and then create a bar chart of division. Store this chart in the bc object.
+A bubble chart of home price index against homeownership is stored in the bubble object. Link bc and bubble in a single row.
+Remove the legend from your linked graphic.
+
+```{r}
+# Create a shared data object keyed by division
+shared_div <- SharedData$new(us2017, key = ~division)
+
+# Create a bar chart for division
+bc <- shared_div %>%
+  plot_ly() %>%
+  count(division) %>%
+  add_bars(x = ~division, y = ~n) %>%
+  layout(barmode = "overlay")
+  
+# Bubble chart
+bubble <- shared_div %>%
+  plot_ly(x = ~home_owners, y = ~house_price, hoverinfo = "text", text = ~state) %>%
+  add_markers(size = ~population, marker = list(sizemode = "diameter"))
+
+# Remove the legend
+subplot(bc, bubble) %>% hide_legend()
+```
+
