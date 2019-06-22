@@ -1,0 +1,171 @@
+---
+title: "Introduction to Bioconductor_What is Bioconductor?"
+author: "dizhen"
+date: "2019Äê6ÔÂ22ÈÕ"
+output: html_document
+---
+# Bioconductor version
+In the video, you learned about the Bioconductor project. One advantage of this fantastic resource is its continuous improvements, reflected in scheduled releases. Hence, checking the current version is important for the reproducibility of your analysis.
+
+Important note: For this course, you will be using the BiocInstaller package to install and check package versions, as we will be using Bioconductor version 3.6. For details on the latest Bioconductor installation instructions see Bioconductor install page.
+
+The package BiocInstaller has been installed using source("https://bioconductor.org/biocLite.R"). Remember, you can check the Bioconductor version using the function biocVersion() from the BiocInstaller package.
+
+```{r}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install()
+```
+
+Instructions
+
+Your task is to check the R version and the Bioconductor version, currently being used:
+
+Check the R version using version (without parenthesis).
+Check the version of Bioconductor using the syntax package::function().
+
+```{r}
+# Load the BiocInstaller package
+library(BiocInstaller)
+
+# Check R version
+version
+
+# Explicit syntax to check the Bioconductor version
+BiocInstaller::biocVersion()
+```
+
+# BiocLite to install packages
+As example to install packages we will use the BSgenome package. This is a data package which contains representations of several genomes. When you install a new package it usually call installations for its dependencies that takes some time, hence we have already installed BSgenome for you to use on this exercise.
+
+Note: Using Bioconductor version 3.7 or earlier, packages can be installed using the following code:
+
+```{r}
+# Using Bioconductor version 3.6
+source("https://bioconductor.org/biocLite.R")
+biocLite("BSgenome")
+
+# Load the package
+library(BSgenome)
+#For versions 3.8 or higher, you will use the BiocManager instead.
+```
+
+For this exercise, you should not use source() or biocLite() to install BSgenome. This has already been done for you.
+
+You can load the package using library(packageName) and check the package's version using the function packageVersion("packageName").
+
+Instructions
+
+Use library() to load the package BSgenome. Note that BSgenome has already been installed for you.
+Read the output messages and view the required packages.
+Check the installed version of BSgenome.
+
+```{r}
+# Load the BSgenome package
+library(BSgenome)
+
+# Check the version of the BSgenome package
+packageVersion("BSgenome")
+```
+
+# Interaction with classes
+Let's say we have an object called a_genome from class BSgenome. With a_genome, you can ask questions like these:
+
+```{r}
+# What is a_genome's main class?
+class(a_genome)  # "BSgenome"
+
+# What is a_genome's other classes?
+is(a_genome)  # "BSgenome", "GenomeDescription"
+
+# Is a_genome an S4 representation?
+isS4(a_genome)  # TRUE
+```
+
+If you want to find out more about the a_genome object, you can use the accessor show(a_genome) or use other specific accessors from the list of .S4methods(class = "BSgenome").
+
+Instructions 
+
+Investigate about the a_genome using show().
+
+Investigate some other accessors like organism(), provider(), seqinfo().
+
+```{r}
+# Investigate the a_genome using show()
+show(a_genome)
+
+# Investigate some other accesors
+organism(a_genome)
+provider(a_genome)
+seqinfo(a_genome)
+```
+
+# Discovering the Yeast genome
+Let's continue to explore the yeast genome using the package BSgenome.Scerevisiae.UCSC.sacCer3 which is already installed for you.
+
+As with other data in R, we can use head() and tail() to explore the yeastGenome object. We can also subset the genome by chromosome by using \$ as follows: object_name$chromosome_name. If you need the names of the chromosomes use the names() function.
+
+Another nifty function is nchar(), used to count the number of characters in a sequence.
+
+Instructions 
+
+Load the BSgenome.Scerevisiae.UCSC.sacCer3 yeast genome package and assign it to yeastGenome.
+
+Use head() on the sequence names, found using seqnames().
+
+Use tail() on the sequence lengths, found using seqlengths().
+
+```{r}
+# Load the yeast genome
+library(BSgenome.Scerevisiae.UCSC.sacCer3)
+
+# Assign data to the yeastGenome object
+yeastGenome <- BSgenome.Scerevisiae.UCSC.sacCer3
+
+# Get the head of seqnames and tail of seqlengths for yeastGenome
+head(seqnames(yeastGenome))
+tail(seqlengths(yeastGenome))
+
+# Print chromosome M, alias chrM
+yeastGenome$chrM
+
+# Count characters of the chrM sequence
+nchar(yeastGenome$chrM)
+```
+
+# Partitioning the Yeast genome
+Genomes are often big, but interest usually lies in specific regions of them. Therefore, we need to subset a genome by extracting parts of it. To pick a sequence interval use getSeq() and specify the name of the chromosome, and the start and end of the sequence interval:
+
+```{r}
+getSeq(yeastGenome, names = "chrI", start = 100, end = 150)
+
+```
+
+Notice that names is optional; if not specified, it will return all chromosomes. The parameters start and end are also optional and, if not specified, will take the default values 1 and the length of the sequence respectively.
+
+Instructions
+
+Use getSeq() to get the first 30 bases of each chromosome in the yeastGenome object.
+
+```{r}
+# Load the yeast genome
+library(BSgenome.Scerevisiae.UCSC.sacCer3)
+
+# Assign data to the yeastGenome object
+yeastGenome <- BSgenome.Scerevisiae.UCSC.sacCer3
+
+# Get the first 30 bases of each chromosome
+getSeq(yeastGenome, end = 30)
+```
+
+# Available Genomes
+As a recap, the BSgenome package makes available various public genomes. If you want to explore the available genomes from this package, you can use:
+
+```{r}
+available.genomes()
+```
+
+The list of names will appear in the following format: BSgenome.speciesName.provider.version.
+
+After running this function, can you tell which is the major provider of available genomes?
+

@@ -1,0 +1,223 @@
+---
+title: "Introduction to Bioconductor_Biostrings and when to use them?"
+author: "dizhen"
+date: "2019Äê6ÔÂ22ÈÕ"
+output: html_document
+---
+# Exploring the Zika virus sequence
+It's your turn to explore the Zika virus genome, which has been loaded in your workspace as zikaVirus. The genome was downloaded from NCBI and you can apply Biostrings functions to learn more about it.
+
+Start by checking the alphabet of the sequence.
+
+```{r}
+alphabet() # Shows the letters included in the sequence
+alphabetFrequency() # Shows the counts per letter
+```
+
+Remember from the video that each alphabet corresponds to a specific biostring container, and each alphabet usually has extra code letters and symbols.
+
+Instructions
+
+Use alphabet() to find out which letters are included in the zikaVirus
+Use alphabetFrequency() to check which letters appear the most in the sequence.
+Call alphabet() with the attribute baseOnly = TRUE. What difference do you see when adding this optional argument?
+
+```{r}
+# Load packages
+library(Biostrings)
+
+# Check the alphabet of the zikaVirus
+alphabet(zikaVirus)
+
+# Check the alphabetFrequency of the zikaVirus
+alphabetFrequency(zikaVirus)
+
+# Check alphabet of the zikaVirus using baseOnly = TRUE
+alphabet(zikaVirus, baseOnly = TRUE)
+```
+
+# Manipulating Biostrings
+Using a short sequence (dna_seq) from the zikaVirus object, it is your turn to have a go with the two biological processes of transcription and translation.
+
+In the first two parts if this exercise, you will apply these processes separately. In the last part, you'll apply them in one step.
+
+You'll be using a very small sequence in this exercise, but remember that the power of Biostrings comes to light when manipulating much larger sequences.
+
+Instructions
+
+unlist() the zikaVirus set and select the first 21 base pairs with subseq(). The resulting object will be a "DNAString" object.
+Transcribe the dna_seq into an "RNAString" and assign it to rna_seq.
+
+Translate the rna_seq into an "AAString" and assign it to aa_seq.
+```{r}
+# Unlist the set, select the first 21 letters, and assign to dna_seq
+dna_seq <- subseq(unlist(zikaVirus), end = 21)
+dna_seq
+
+# Transcribe dna_seq into an RNAString object and print it
+rna_seq <- RNAString(dna_seq) 
+rna_seq
+
+# Translate rna_seq into an AAString object and print it
+aa_seq <- translate(rna_seq)
+aa_seq
+```
+
+Complete the processes of transcription and translation on the "DNAString" object dna_seq in one step, converting it directly into an "AAString" object, aa_seq.
+
+```{r}
+# Unlist the set, select the first 21 letters, and assign to dna_seq
+dna_seq <- subseq(unlist(zikaVirus), end = 21)
+dna_seq
+
+# Transcribe and translate dna_seq into an AAString object and print it
+aa_seq <- translate(dna_seq)
+aa_seq
+```
+
+# From a set to a single sequence
+From the video, you know that sequences can be loaded into R using the function readDNAStringSet(). The zikaVirus has been read into your environment using this function.
+
+It is your turn to convert this set into a single sequence, explore the new sequence, and subset it.
+
+Instructions 
+
+Create a new object called zikv (as the Zika Virus convention name), collating the set to one sequence.
+Check the length of the zikaVirus and the length of zikv.
+Check the width of the zikaVirus and explain why zikv does not have width.
+Subset the first 30 bases of zikv and assign to subZikv.
+
+```{r}
+# Create zikv with one collated sequence using zikaVirus
+zikv <- unlist(zikaVirus)
+
+# Check the length of zikaVirus and zikv
+length(zikaVirus)
+length(zikv)
+
+# Check the width of zikaVirus
+width(zikaVirus)
+
+# Subset zikv to only the first 30 bases
+subZikv <- subseq(zikv, end = 30)
+subZikv
+```
+
+# Common sequence manipulation functions
+So far, you've learned the the most common sequence manipulation functions:
+
+```{r}
+reverse()
+complement()
+reverseComplement()
+translate()
+```
+In real life, you can manipulate really large sequences using these functions.
+
+However, for you to visually see the value and the results of these functions in this exercise, you will use a small subset. The object zikv, which you have previously subsetted from the Zika genome, has only 30 bases.
+
+Instructions
+
+Test the functions using zikv:
+
+Reverse the sequence.
+Complement of the sequence.
+Reverse complement the sequence.
+Translate the sequence.
+
+```{r}
+# Reverse the zikv sequence
+reverse(zikv)
+
+# Complement the zikv sequence
+complement(zikv)
+
+# Reverse complement the zikv sequence
+reverseComplement(zikv)
+
+# Translate the zikv sequence
+translate(zikv)
+```
+
+# Searching for a pattern
+Let's find some occurrences of a pattern in the zikaVirus set using vmatchPattern(). Then, let's try the same pattern search using matchPattern() with a single sequence, zikv.
+
+```{r}
+# For Sets
+vmatchPattern(pattern = "ACATGGGCCTACCATGGGAG", 
+              subject = zikaVirus, max.mismatch = 1)
+
+# For single sequences
+matchPattern(pattern = "ACATGGGCCTACCATGGGAG", 
+              subject = zikv, max.mismatch = 1)
+```
+
+Both functions should find the same number of occurrences, but you will notice a different output. How many matches do we get when running each pattern search individually?
+
+1 match
+
+# Finding Palindromes
+It is your turn to find palindromic sequences using the zikv sequence. Remember, findPalindromes() searches in a single sequence and does not work with a set.
+
+Instructions
+
+Find the palindromes in zikv.
+Take a minute to check how long these palindromes are and where they are located.
+
+```{r}
+# Find palindromes in zikv
+findPalindromes(zikv)
+
+```
+
+# Finding a conserved region within six frames
+Congratulations on getting this far!
+
+Now you will be able to look for the NS5 protein sequence in the Zika virus sequence. The NS5 is a very conserved virus protein. It was downloaded and loaded for you from Uniprot.
+
+The Zika virus DNA sequence has been transcribed into an RNAStringSet, called rnaframesZikaSet. The set has six reading frames (one per sequence) for you to translate into amino acids. When doing the search, you will set the max.mismatch argument in your call of vcountPattern() to add flexibility to your search.
+
+Instructions 
+
+Print rnaframesZikaSet.
+Translate all of the 6 reading frames into amino acids.
+Count the matches with the NS5 protein sequence with vcountPattern(), setting max.mismatch = 15.
+Select the sequence from the frame that contains the match using indexing.
+Convert this frame into a single sequence. Take your time to compare the selectedSet and the selectedSeq.
+
+```{r}
+# print the rnaframesZikaSet
+rnaframesZikaSet
+
+# translate all 6 reading frames 
+AAzika6F <- translate(rnaframesZikaSet)
+AAzika6F
+
+# Count the matches allowing 15 mistmatches
+vcountPattern(pattern = NS5, subject = AAzika6F, max.mismatch = 15)
+
+# Select the frame that contains the match
+selectedSet <- AAzika6F[3] 
+  
+#Convert this frame into a single sequence
+selectedSeq <- unlist(selectedSet)
+```
+
+# Looking for a match
+From the previous exercise, you have two objects: selectedSet(a set) and selectedSeq (a single sequence).
+
+You have recently discovered that pattern ns5 is on frame 3 of the AAzika6F. Now, you will discover how the match looks like using selectedSet and selectedSeq.
+
+Instruction
+Use vmatchPattern() on the appropriate set and allow max.mismatch = 15.
+```{r}
+# Use vmatchPattern() with the set
+vmatchPattern(pattern = ns5, subject = selectedSet, max.mismatch = 15)
+```
+
+Use matchPattern() on the appropriate single sequence and allow max.mismatch = 15.
+```{r}
+# Use matchPattern() with the single sequence
+matchPattern(pattern = ns5, subject = selectedSeq, max.mismatch = 15)
+```
+

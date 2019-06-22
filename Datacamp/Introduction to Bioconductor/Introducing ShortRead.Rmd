@@ -1,0 +1,296 @@
+---
+title: "Introduction to Bioconductor_Introducing ShortRead"
+author: "dizhen"
+date: "2019Äê6ÔÂ22ÈÕ"
+output: html_document
+---
+# Why fastq?
+So far, you have been introduced to the ShortRead package with useful tools for the initial stages of short-read sequence analysis. As a summary, the main functionalities of this package are:
+
+Data input
+Quality assessment
+Data transformation
+Access to downstream analysis
+In this context, you have been exposed to two different file types: fasta and fastq.
+
+What do you think is the reason to use fastq formatted files?
+
+Possible Answers
+fastq formatted files are not only the standard for high-throughput sequence. They are also used to save the score encodings for each based called which helps to assess the quality of each and all of the reads in a sequence file.
+
+# Reading in files
+From the video, you've learned the difference between fasta and fastq files and what information can be stored in those files.
+
+You have also seen examples of reading fasta and fastq files with their respective functions. You have learned that readFasta() and readFastq() both need a location and a file pattern to read one or many files.
+
+Which two arguments are particular to the function readFastq() from the package ShortRead?
+
+Answer:
+qualityType and filter are two particular arguments for reading fastq files with readFastq().
+
+# Exploring a fastq file
+Fastq files usually contain thousands/millions of reads and can become very large in size! For this exercise, you will use a small fastq sub sample of 500 reads which fits easily into memory and can be read entirely using the function readFastq().
+
+The original sequence file comes from Arabidopsis thaliana, provided by the UC Davis Genome Center. The accession number is SRR1971253 and was downloaded from the Sequence Read Archive (SRA). It contains DNA from leaf tissues, pooled and sequenced on Illumina HiSeq 2000. These sequences are single-read sequences with 50 base pairs (bp) length.
+
+fqsample is a ShortReadQ object and contains information about reads, quality scores, and ids. It's your turn to explore it!
+
+Instruction
+Load the ShortRead package and print fqsample to view it.
+Check class of the sread() of fqsample. What kind of object is this?
+```{r}
+# Load ShortRead
+library(ShortRead)
+
+# Print fqsample
+fqsample
+
+# Check class of fqsample
+class(fqsample)
+
+# Check class sread fqsample
+class(sread(fqsample))
+
+# Check id of fqsample
+id(fqsample)
+
+```
+# Extract a sample from a fastq file
+It is your turn to draw a sample piece from a sequence of many reads.
+
+You will use the same file you've read in the previous exercise. This file has 500 reads, each of 50 bp. The file path is stored in an object called f.
+
+Using FastqSampler(con = file_path, n = length), set.seed(), and yield() you can subset 100 reads from your sequence file.
+
+Instruction
+
+Load ShortRead.
+Use set.seed() with value 1234.
+Use FastqSampler() with the small fastq file located in f and select 100 reads.
+Use yield() to generate the sub sequence.
+
+```{r}
+
+# Load ShortRead
+library(ShortRead)
+
+# Set a seed for sampling
+set.seed(1234)
+
+# Use FastqSampler with f and select 100 reads
+fs <- FastqSampler(con = f, n = 100)
+
+# Generate new sample yield
+my_sample <- yield(fs)
+
+# Print my_sample
+my_sample
+```
+
+# Exercise
+Exercise
+Exploring sequence quality
+It is your turn to perform the quality control check on the fqsample. This is an important step, done before starting any further analyses, to quickly find out whether the data is OK or if it has any problems.
+
+To check the encoding values for each letter in quality(), use encoding():
+
+```{r}
+encoding(quality(fqsample))
+
+```
+For a quality assessment (QA) summary use qa():
+
+
+```{r}
+qaSummary <- qa(fqsample, type = "fastq", lane = 1)
+
+```
+This qaSummary has already been created for you. QA elements can be accessed with qaSummary[["nameElement"]].
+
+Instruction
+Check the quality of the sequence file fqsample.
+Check the encoding of the quality, remember this is an Illumina encoding.
+Check the "baseQuality" of the qaSummary.
+
+```{r}
+# load ShortRead
+library(ShortRead)
+
+# Check quality
+quality(fqsample)
+
+# Check encoding of quality
+encoding(quality(fqsample))
+
+# Check baseQuality
+qaSummary[["baseQuality"]]
+```
+
+There are many more resources to check the quality of your sequences. Always remember that this is an important step. While this function cannnot be done on the DataCamp platform, you can visualize the quality report as a web report using 
+```{r}
+browseURL(report(qaSummary))
+```
+
+# Try your own nucleotide frequency plot
+Now it's time to take a closer look at the frequency of nucleotides per cycle. The best way to do this is by making a visualization. Usually, the first cycles are a bit random and then the frequency of nucleotides should stabilize with the coming cycles.
+
+This exercise uses the complete fastq file SRR1971253 with some pre-processing done for you:
+
+```{r}
+library(ShortRead)
+fqsample <- readFastq(dirPath = "data", 
+                      pattern = "SRR1971253.fastq")
+# extract reads                      
+abc <- alphabetByCycle(sread(fqsample))
+
+# Transpose nucleotides A, C, G, T per column
+nucByCycle <- t(abc[1:4,]) 
+
+# Tidy dataset
+nucByCycle <- nucByCycle %>% 
+  as.tibble() %>% # convert to tibble
+  mutate(cycle = 1:50) # add cycle numbers
+```
+
+Your task is to make a Nucleotide Frequency by Cycle plot using tidyverse functions!
+
+Instructions
+
+glimpse() the object nucByCycle to get a view of the data.
+gather() the nucleotide letters in alphabet and get a new count column.
+Make a line plot of cycle vs count, colored by alphabet.
+
+
+```{r}
+# Glimpse nucByCycle
+glimpse(nucByCycle)
+
+# Create a line plot of cycle vs count
+nucByCycle %>% 
+  # Gather the nucleotide letters in alphabet and get a new count column
+  gather(key = alphabet, value = count , -cycle) %>% 
+  ggplot(aes(x = cycle, y =  count, color = alphabet)) +
+  geom_line(size = 0.5 ) +
+  labs(y = "Frequency") +
+  theme_bw() +
+  theme(panel.grid.major.x = element_blank())
+```
+
+# Filtering reads on the go!
+What if, from all of the reads in a file, you are only interested in some of those reads? You can use a filter!
+
+Let's say that you are interested only in those reads that start with the pattern "ATGCA". A tiny filtering function can do the job, making use of the srFilter() function.
+
+```{r}
+myStartFilter <- srFilter(function(x) substr(sread(x), 1, 5) == "ATGCA")
+
+```
+Let's see if you are able to find out, how many reads start with the string "ATGCA".
+
+Instructions 
+
+Check the class of fqsample.
+Use the filter myStartFilter() on fqsample and save the result in selectedReads.
+Check the class of selectedReads.
+Use the detail() function to check selectedReads.
+
+```{r}
+# Load package ShortRead
+library(ShortRead)
+
+# Check class of fqsample
+class(fqsample)
+
+# Filter reads into selectedReads using myStartFilter
+selectedReads <- fqsample[myStartFilter(fqsample)]
+
+# Check class of selectedReads
+class(selectedReads)
+
+# Check detail of selectedReads
+detail(selectedReads)
+```
+
+# Removing duplicates
+It is always a good practice to check that your sequence reads don't contain too many duplicates.
+
+```{r}
+# Sample with duplicates of class: ShortReadQ
+dfqsample
+
+# Get the reads from dfqsample
+mydReads <- sread(dfqsample)
+
+# Counting duplicates
+table(srduplicated(mydReads))
+```
+
+How would you go about filtering duplicated reads in a file? Pay attention to what the condition should be in this filter.
+
+Answer:
+To keep those reads that are not duplicated
+```{r}
+mydReads[srduplicated(mydReads) == FALSE]
+```
+is the correct answer.
+
+# More filtering!
+Awesome! Now that you've had some practice with filtering reads, let's use the function polynFilter(). This function selects reads that contain less than a given number of duplicate nucleotides. For example, polynFilter(threshold = 20, nuc = c("A")) will select all reads that contain less than 20 A's. The parameter nuc is a character vector containing IUPAC symbols for nucleotides or the value "other" for all non-nucleotide symbols.
+
+The fqsample object is available in your workspace.
+
+Instruction
+
+Check reads of fqsample using the appropriate function.
+Create a filter called myFil using polynFilter with the following parameters:
+A threshold of 3 nucleotides.
+A character vector nuc equal to "A".
+Check the newly created filter by printing it to the console.
+
+Mark reads from fqsample to be filtered using myFil() and store the results in filterCondition.
+Filter fqsample using the filterCondition and store the result in filteredSequences.
+Check the reads of filteredSequences
+
+```{r}
+# Check reads of fqsample
+sread(fqsample)
+
+# Create myFil using polynFilter
+myFil <- polynFilter(threshold = 3, nuc = c("A"))
+
+# Apply your filter to fqsample
+filterCondition <- myFil(fqsample)
+
+# Use myFil with fqsample
+filteredSequences <- fqsample[filterCondition]
+
+# Check reads of filteredSequences
+sread(filteredSequences)
+```
+
+# Plotting cycle average quality
+Here you are! To challenge yourself, are you ready to test a bit of all of what you have learned by making three quick plots? You will see that now it all pays off!
+
+It is your turn to use the new package Rqc and check multiple files at once.
+
+Instructions
+
+Call rqcCycleAverageQualityPlot() on the qa object.
+Call rqcCycleAverageQualityPlot() on qa with theme_minimal() to change background to white.
+```{r}
+# Load package Rqc
+library(Rqc)
+
+# Average per cycle quality plot with white background
+rqcCycleAverageQualityPlot(qa) + theme_minimal()
+```
+
+Call rqcReadQualityPlot() on qa and change the background to white.
+```{r}
+# Load package Rqc
+library(Rqc)
+
+# Read quality plot with white background
+rqcReadQualityPlot(qa)+ theme_minimal()
+```
+

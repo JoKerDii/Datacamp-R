@@ -1,0 +1,306 @@
+---
+title: "Introduction to Bioconductor_IRanges and GenomicRanges"
+author: "dizhen"
+date: "2019Äê6ÔÂ22ÈÕ"
+output: html_document
+---
+# IRanges
+As you've learned in the previous chapters, you can store sequences with their own alphabets, order, and focus on certain intervals of these sequences. To extract sequence intervals, you use ranges. The Bioconductor package IRanges comes in handy with its function IRanges(), which creates a vector representation of a sequence, used to facilitate subsetting and annotation.
+
+The IRanges package has been already loaded. To help you with this exercise you can check the documentation of IRanges().
+
+Fill in the blank:
+
+IRanges objects can be defined using two data types: /___ or ___ vectors.
+
+numeric or logical
+
+IRanges objects can be defined using either numeric or logical vectors. Numeric vectors will delimit the exact positions by index, and logical vectors will select a range by a condition
+
+# Constructing IRanges
+In the video, some IRanges constructor examples were provided. This is your turn to practice creating sequence ranges with different arguments and see how these arguments are reused or complemented.
+
+Using the IRanges() function, you can specify parameters such as start, end, or width. These parameter inputs can fall into one of two categories:
+
+start, end, and width are numeric vectors.
+The start parameter is a logical vector.
+Missing arguments will be resolved using the equation width = end - start + 1.
+
+The IRanges() constructor indicates that all of the parameters are optional with default NULL:
+
+```{r}
+IRanges(start = NULL, end = NULL, width = NULL, names = NULL)
+
+```
+
+Instructions
+
+Construct an IRanges object with the following arguments:
+
+A start equal to a vector of values 1 through 5 and end equal to 100.
+An end equal to 100 and width equal to both 89 and 10.
+start equal to Rle(c(F, T, T, T, F, T, T, T)).
+Print the objects and see the results!
+
+```{r}
+# load package IRanges
+library(IRanges)
+
+# start vector 1 through 5, end 100 
+IRnum1 <- IRanges(start = seq(1,5), end = 100)
+
+# end 100 and width 89 and 10
+IRnum2 <- IRanges(end = 100, width = c(89,10))
+
+# logical argument start = Rle(c(F, T, T, T, F, T, T, T))
+IRlog1 <- IRanges(start = Rle(c(F, T, T, T, F, T, T, T)))
+
+# Printing objects in a list
+print(list(IRnum1 = IRnum1, IRnum2 = IRnum2, IRlog1 = IRlog1))
+```
+
+# Interacting with IRanges
+You can use the IRanges() function to create a single sequence. You can also provide vectors to IRanges() to create multiple sequence ranges at the same time. This is both fascinating and useful! The creation of objects seq_1 and seq_2 are examples of this.
+
+Remember that width = end - start + 1.
+
+For this exercise, check the width of each of the sequences provided here, using width() and lengths(). Notice the difference between the two types of outputs.
+
+Instruction
+Find the widths of seq_1 and seq_2 using width().
+Find the widths of seq_1 and seq_2 using lengths().
+```{r}
+# Create the first sequence seq_1
+seq_1 <- IRanges(start = 10, end = 37)
+
+# Create the second sequence seq_2
+seq_2 <- IRanges(start = c(5, 35, 50),
+                 end = c(12, 39, 61),
+                 names = LETTERS[1:3])
+
+# Check the width of seq_1 and seq_2
+width(seq_1)
+width(seq_2)
+# Check the width of seq_1 and seq_2
+lengths(seq_1)
+lengths(seq_2)
+
+```
+# From tabular data to Genomic Ranges
+In the video, you learned ways to create GRanges objects. You can define a GRange with a range's name, start, and end positions (seqnames, start, and end). If you have data in table format, you can also transform it into a GRanges object. Let's use a data frame, called seq_intervals, as this is most likely where you have stored your sequence intervals. Note: you can also use a tibble if you are more familiar with them.
+
+You will use the predefined seq_intervals data frame to transform into a GRanges object using the as() function. The as() function was introduced in the last video - it takes in an object and the name of the class to convert the object to.
+
+Instructions
+
+load GenomicRanges.
+Print seq_intervals, to see how it looks.
+Transform seq_intervals into a GRanges object, call the new object myGR.
+print myGR.
+
+```{r}
+# Load package GenomicRanges
+library(GenomicRanges)
+
+# Print seq_intervals
+seq_intervals
+
+# Create myGR
+myGR <- as(seq_intervals, "GRanges")
+
+# Print myGR
+myGR
+```
+
+# GenomicRanges accessors
+In the previous exercise, you created a GRanges object from a data frame with the basic information. You will discover that GRanges can store much more!
+
+Use the GRanges object called myGR to investigate more of it using accessors methods. You can check the GRanges object's characteristics such as the name of each chromosome, the number of sequences, the names of each sequence, information about strand, score, and length, and more.
+
+The following are some of the basic accessors for GRanges:
+
+```{r}
+seqnames(gr)
+ranges(gr)
+mcols(gr)
+genome(gr)
+seqinfo(gr)
+```
+
+For a complete list of accessors, you can check methods(class = "GRanges").
+
+Use the object myGR for this exercise.
+
+Instructions
+Get sequence information from myGR.
+Now check the metadata using mcols().
+
+```{r}
+# Load GenomicRanges
+library(GenomicRanges)
+
+# Print the seqinfo of object myGR
+seqinfo(myGR)
+
+# Check the metadata, if any
+mcols(myGR)
+```
+
+Remember to check methods(class = "GRanges") if you want to find other useful accessors.
+
+# Human genome chromosome X
+It is your turn to use the TxDb.Hsapiens.UCSC.hg38.knownGene package and extract information from it. Like in the video, you will subset all genes in chromosome X, using the function genes() with the argument filter set to select instances where tx_chrom = "chrX". Then, you will explore this subset of genes.
+
+Remember that filter receives a list() of filter conditions to select specific genome intervals.
+
+If you would like to test other filters, valid names for this list are: "gene_id", "tx_id", "tx_name", "tx_chrom", "tx_strand", "exon_id", "exon_name", "exon_chrom", "exon_strand", "cds_id", "cds_name", "cds_chrom", "cds_strand", and "exon_rank".
+
+Instructions 
+
+Load TxDb.Hsapiens.UCSC.hg38.knownGene using library(), assign it to hg, and print it.
+Extract all the genes in chromosome X, assign to hg_chrXg, then print it.
+```{r}
+# Load human reference genome hg38
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+
+# Assign hg38 to hg, then print it
+hg <- TxDb.Hsapiens.UCSC.hg38.knownGene
+hg
+
+# Extract all the genes in chromosome X as hg_chrXg, then print it
+hg_chrXg <- genes(hg, filter = list(tx_chrom = c("chrX")))
+hg_chrXg
+```
+
+Filter again, but this time, add the tx_strand argument to extract all positive stranded genes in chromosome X.
+Sort hg_chrXgp and print it.
+
+```{r}
+# Load human reference genome hg38
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+
+# Assign hg38 to hg, then print it
+hg <- TxDb.Hsapiens.UCSC.hg38.knownGene
+hg
+
+# Extract all positive stranded genes in chromosome X, assign to hg_chrXgp, then sort it
+hg_chrXgp <- genes(hg, filter = list(tx_chrom = c("chrX"), tx_strand = "+"))
+sort(hg_chrXgp)
+```
+
+# A sequence window
+To temporarily partition sections of your sequences you will use the concept of windows of given widths that can move in steps. As you have seen in the video, GRanges provides the slidingWindows() function, with arguments such as width and step.
+```{r}
+slidingWindows(x, width, step = 1L)
+
+```
+The GRanges object called ABCD1, with gene id 215 of length 19895, has been pre-loaded for this exercise. Check the ranges() function to see its structure.
+
+```{r}
+ranges(ABCD1)
+
+```
+If you needed exactly 2 windows using step = 1L, what will be the maximum number allowed for the width of each window?
+
+Answer£º
+The length of the GRanges object -1
+
+# Is it there?
+GRangesLists also come with useful accessor functions; almost all the accessors from IRanges and GRanges are reused, but they instead result in a list. You can find accessors using the function methods(class = "GRangesList").
+
+It is your turn to explore chromosome X genes, hg_chrX, and find the gene of interest, ABCD1. You will do this by using the function overlapsAny() between the target ABCD1 and the subject hg_chrX.
+
+Are there any overlapping ranges with the ABCD1 gene?
+
+Answer: TRUE
+```{r}
+overlapsAny(ABCD1, hg_chrX)
+```
+
+# More about ABCD1
+Now that you know that there is an overlap between chromosome X and the gene ABCD1, let's find its gene id and its location, also called locus.
+
+Instructions 
+
+Use the function subsetByOverlaps() to subset hg_chrX with its overlapping region with the ABCD1 gene and store the overlapping range in rangefound.
+Check names of rangefound.
+Check the output of ABCD1 and rangefound.
+
+```{r}
+# Store the overlapping range in rangefound
+rangefound <- subsetByOverlaps(hg_chrX, ABCD1)
+
+# Check names of rangefound
+names(rangefound)
+
+# Check the gene of interest 
+ABCD1
+
+# Check rangefound
+rangefound
+```
+
+# How many transcripts?
+Remember in the video how we discovered the length of the exons in one of the transcripts of our gene of interest? It is your turn to find out how many transcripts the gene ABCD1 has. You can find out by using:
+
+```{r}
+transcriptsBy(x, by = "gene")
+```
+
+Once you get all the transcripts by gene, you can then select any gene by its id. The gene id of ABCD1 is 215. A little tip to select the information on a specific gene is to use back-tick marks around the gene id, for example transcripts$`215`.
+
+Instructions
+
+Load the human transcripts DB to hg.
+Pre-filter chromosome X using seqlevels().
+Get all transcripts in hg by "gene", store results in hg_chrXt, and print it.
+Select gene `215` from the transcripts using $.
+
+
+```{r}
+
+# Load the human transcripts DB to hg
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+hg <- TxDb.Hsapiens.UCSC.hg38.knownGene
+
+# Prefilter chromosome X "chrX" using seqlevels()
+seqlevels(hg) <- c("chrX")
+
+# Get all transcripts by gene and print it
+hg_chrXt <- transcriptsBy(hg, by = "gene")
+hg_chrXt
+
+```
+
+# From GRangesList object into a GRanges object
+The unlist() operation is fast and serves to partition a GRangesList.
+
+You can unlist the hg_ChrX and then check how the lengths differ between the GRangesList and the GRanges objects.
+
+Instructions 
+
+Unlist hg_ChrX and save a new object called myGR.
+Check the class of both objects.
+Check the length of hg_ChrX and myGR.
+```{r}
+# Unlist hg_ChrX and save result as myGR
+myGR <- unlist(hg_ChrX)
+
+# Compare classes of hg_ChrX and myGR
+class(hg_ChrX)
+class(myGR)
+
+# Compare length of hg_ChrX and myGR
+lengths(hg_ChrX)
+lengths(myGR)
+```
+
+Question
+Fill in the blank:
+
+You would expect the GRanges object to have a length ___ the GRangesList.
+
+Answer:
+greater than
+
+
