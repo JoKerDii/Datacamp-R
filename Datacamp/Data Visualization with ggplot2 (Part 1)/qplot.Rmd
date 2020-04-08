@@ -1,0 +1,242 @@
+---
+title: "Datacamp_Data Visualization with ggplot2 (Part 1)__qplot and wrap-up"
+author: "dizhen"
+date: '2020/4/9'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## qplot
+
+```{r}
+library("ggplot2")
+
+# ggplot
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width)) +
+ geom_point()
+
+# qplot
+qplot(Sepal.Length, Sepal.Width, data = iris) 
+
+# base
+plot(iris$Sepal.Length, iris$Sepal.Width) 
+plot(Sepal.Width ~ Sepal.Length, data = iris)
+```
+
+
+```{r}
+# shape = Species
+qplot(Sepal.Length, Sepal.Width, data = iris, shape = Species) 
+
+# size = Species
+qplot(Sepal.Length, Sepal.Width, data = iris, size = Species) 
+
+# col = Species
+qplot(Sepal.Length, Sepal.Width, data = iris, col = Species) 
+
+# geom argument
+qplot(Sepal.Length, Sepal.Width, data = iris, col = Species,
+  geom = "jitter")
+
+# position argument
+qplot(Sepal.Length, Sepal.Width, data = iris, col = Species,
+  position = "jitter") 
+
+# alpha
+qplot(Sepal.Length, Sepal.Width, data = iris, col = Species,
+  position = "jitter", alpha = 0.5) 
+qplot(Sepal.Length, Sepal.Width, data = iris, col = Species,
+  position = "jitter", alpha = I(0.5))
+
+ 
+ 
+```
+
+```{r}
+library(tidyr)
+library(tidyverse)
+iris.tidy <- iris %>%
+  gather(key, Value, -Species) %>%
+  separate(key, c("Part", "Measure"), "\\.")
+str(iris)
+
+# continuous vs categorical
+qplot(Species, Value, data = iris.tidy, col = Part) 
+
+# position = "jitter"
+qplot(Species, Value, data = iris.tidy, col = Part,
+  position = "jitter")
+
+# jitter manually
+posn.j <- position_jitter(0.1) 
+qplot(Species, Value, data = iris.tidy, col = Part,
+  position = posn.j) 
+
+# comparison
+posn.j <- position_jitter(0.1)
+qplot(Species, Value, data = iris.tidy, col = Part,
+  position = posn.j) # Fine for easy plot
+ggplot(iris.tidy, aes(x = Species, y = Value, col = Part)) +
+  geom_point(position = posn.j) # very flexible
+
+```
+
+### Practice
+
+
+```{r}
+# The old way (shown)
+plot(mpg ~ wt, data = mtcars) # formula notation
+with(mtcars, plot(wt, mpg)) # x, y notation
+
+# Using ggplot:
+ggplot(mtcars, aes(x = wt, y = mpg)) +
+  geom_point()
+
+# Using qplot:
+qplot(wt, mpg, data = mtcars)
+
+```
+
+
+
+```{r}
+# basic qplot scatter plot:
+qplot(wt, mpg, data = mtcars)
+
+# Categorical variable mapped onto size:
+# cyl
+qplot(wt, mpg, data = mtcars, size = factor(cyl))
+
+# gear
+qplot(wt, mpg, data = mtcars, size = factor(gear))
+
+# Continuous variable mapped onto col:
+# hp
+qplot(wt, mpg, data = mtcars, col = hp)
+
+# qsec
+qplot(wt, mpg, data = mtcars, col = qsec)
+```
+
+
+
+```{r}
+# qplot() with x only
+qplot(x = factor(cyl), data = mtcars)
+
+# qplot() with x and y
+qplot(x = factor(cyl), y = factor(vs),data = mtcars)
+
+# qplot() with geom set to jitter manually
+qplot(x = factor(cyl), y = factor(vs),data = mtcars,geom ="jitter")
+
+```
+
+Some naming conventions:
+
+* Scatter plots:
+
+Continuous x, continuous y.
+
+* Dot plots:
+
+Categorical x, continuous y.
+
+You use geom_point() for both plot types. Jittering position is set in the geom_point() layer.
+
+However, to make a "true" dot plot, you can use geom_dotplot(). The difference is that unlike geom_point(), geom_dotplot() uses a binning statistic. Binning means to cut up a continuous variable (the y in this case) into discrete "bins". You already saw binning with geom_histogram() (see this exercise for a refresher).
+
+One thing to notice is that geom_dotplot() uses a different plotting symbol to geom_point(). For these symbols, the color aesthetic changes the color of its border, and the fill aesthetic changes the color of its interior.
+
+
+```{r}
+# cyl and am are factors, wt is numeric
+class(mtcars$cyl)
+class(mtcars$am)
+class(mtcars$wt)
+
+# "Basic" dot plot, with geom_point():
+ggplot(mtcars, aes(cyl, wt, col = am)) +
+  geom_point(position = position_jitter(0.2, 0))
+
+# 1 - "True" dot plot, with geom_dotplot():
+ggplot(mtcars, aes(cyl, wt, fill = am)) +
+  geom_dotplot(binaxis = "y", stackdir = "center")
+
+# 2 - qplot with geom "dotplot", binaxis = "y" and stackdir = "center"
+qplot(
+  x = cyl, y = wt,
+  data = mtcars,
+  fill = am,
+  geom = "dotplot",
+  binaxis = "y",
+  stackdir = "center"
+)
+```
+**Chicken weight**
+
+The ChickWeight dataset is a data frame which represents the progression of weight of several chicks. The little chicklings are each given a specific diet. There are four types of diet and the farmer wants to know which one fattens the chicks the fastest.
+
+
+```{r}
+# ChickWeight is available in your workspace
+# 1 - Check out the head of ChickWeight
+head(ChickWeight)
+
+# 2 - Basic line plot
+ggplot(ChickWeight, aes(x = Time, y = weight)) +
+  geom_line(aes(group = Chick))
+
+# 3 - Take plot 2, map Diet onto col.
+ggplot(ChickWeight, aes(x = Time, y = weight, col = Diet)) +
+  geom_line(aes(group = Chick))
+
+
+# 4 - Take plot 3, add geom_smooth()
+ggplot(ChickWeight, aes(x = Time, y = weight, col = Diet)) +
+  geom_line(aes(group = Chick), alpha = 0.3) + geom_smooth(lwd = 2, se = FALSE)
+
+
+```
+**Titanic**
+
+You've watched the movie Titanic by James Cameron (1997) again and after a good portion of sobbing you decide to investigate whether you'd have a chance of surviving this disaster.
+
+```{r}
+library(readr)
+titanic <- read_csv("data/titanic.csv")
+titanic <- titanic[,c("Survived","Pclass","Sex","Age")]
+titanic <- na.omit(titanic)
+titanic$Survived <- as.integer(titanic$Survived)
+titanic$Pclass <- as.integer(titanic$Pclass)
+titanic$Sex <- as.factor(titanic$Sex)
+
+
+# 1 - Check the structure of titanic
+str(titanic)
+```
+
+```{r}
+
+# 2 - Use ggplot() for the first instruction
+ggplot(titanic, aes(x = Pclass, fill = Sex)) +
+  geom_bar(position = "dodge")
+
+# 3 - Plot 2, add facet_grid() layer
+ggplot(titanic, aes(x = Pclass, fill = Sex)) +
+  geom_bar(position = "dodge") + facet_grid(.~Survived)
+
+# 4 - Define an object for position jitterdodge, to use below
+posn.jd <- position_jitterdodge(0.5, 0, 0.6)
+
+# 5 - Plot 3, but use the position object from instruction 4
+ggplot(titanic, aes(x = Pclass, y = Age, col = Sex)) +
+  geom_point(position = posn.jd, size = 3, alpha = 0.5) + facet_grid(.~Survived)
+```
+

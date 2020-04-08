@@ -1,0 +1,524 @@
+---
+title: "Datacamp_Data Visualization with ggplot2 (Part 1)__Geometries"
+author: "dizhen"
+date: "2019/4/9"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Scatter plot
+
+1. Common plot types
+
+* Scatter plots
+
+points, jitter, abline
+
+* Bar plots
+
+histogram, bar, errorbar
+
+* Line plots
+
+line
+
+2. Scatter plot
+
+* Each geom has specific aesthetic mappings
+
+* geom_point()
+
+Essential: x, y; Optional: alpha, colour, fill, shape, size
+
+
+3. Add layers
+
+```{r}
+library("ggplot2")
+head(iris)
+iris.summary <- aggregate(iris[1:4], list(iris$Species), mean) 
+names(iris.summary)[1] <- "Species"
+head(iris.summary)
+
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, col = Species)) +
+  geom_point()+
+  geom_point(data = iris.summary, shape = 15, size = 5)
+
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, col = Species)) +
+  geom_point() +
+  geom_point(data = iris.summary,
+  shape = 21, size = 5, fill = "#00000080")
+```
+
+4. Cross hairs
+
+```{r}
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, col = Species)) +
+  geom_point() +
+  geom_vline(data = iris.summary,  aes(xintercept = Sepal.Length))
+
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, col = Species)) +
+  geom_point() +
+  geom_vline(data = iris.summary, aes(xintercept = Sepal.Length)) +
+  geom_hline(data = iris.summary, aes(yintercept = Sepal.Width))
+
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, col = Species)) +
+  geom_point() +
+  geom_vline(data = iris.summary, linetype = 2,
+  aes(xintercept = Sepal.Length, col = Species)) +
+  geom_hline(data = iris.summary, linetype = 2,
+  aes(yintercept = Sepal.Width, col = Species))
+```
+
+5. Remarks
+
+* ggplot2 can also calculate statistics
+
+* mean only = no good
+
+6. jitter
+
+```{r}
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, col = Species)) +
+  geom_point(position = "jitter")
+
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, col = Species)) +
+  geom_jitter()
+
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, col = Species)) +
+  geom_jitter(alpha = 0.6)
+
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, col = Species)) +
+  geom_jitter(shape = 1)
+
+
+```
+
+
+### Practice
+
+```{r}
+# Shown in the viewer:
+ggplot(mtcars, aes(x = cyl, y = wt)) +
+  geom_point()
+
+# Solutions:
+# 1 - With geom_jitter()
+ggplot(mtcars, aes(x = cyl, y = wt)) +
+  geom_jitter()
+
+# 2 - Set width in geom_jitter()
+ggplot(mtcars, aes(x = cyl, y = wt)) +
+  geom_jitter(width = 0.1)
+
+# 3 - Set position = position_jitter() in geom_point() ()
+ggplot(mtcars, aes(x = cyl, y = wt)) +
+  geom_point(position = position_jitter(0.1))
+```
+
+
+```{r}
+library(readr)
+Vocab <- read_csv("Vocab.csv")
+head(Vocab)
+
+# Examine the structure of Vocab
+str(Vocab)
+
+# Basic scatter plot of vocabulary (y) against education (x). Use geom_point()
+ggplot(Vocab, aes(x = education, y = vocabulary)) + geom_point()
+
+# Use geom_jitter() instead of geom_point()
+ggplot(Vocab, aes(x = education, y = vocabulary)) + geom_jitter()
+
+# Using the above plotting command, set alpha to a very low 0.2
+ggplot(Vocab, aes(x = education, y = vocabulary)) + geom_jitter(alpha = 0.2)
+
+# Using the above plotting command, set the shape to 1
+ggplot(Vocab, aes(x = education, y = vocabulary)) + geom_jitter(alpha = 0.2, shape = 1)
+
+```
+
+
+## Bar plots
+
+1. Common plot types
+
+* Scatter plots
+
+points, jitter, abline
+
+* Bar plots
+
+histogram, bar, errorbar
+
+* Line plots
+
+line
+
+2. Histogram
+
+Features:
+
+* Many ways to do binning
+
+* No space between bars
+
+* x axis labels between the bars
+
+* Summary table in the background
+
+
+```{r}
+ggplot(iris, aes(x = Sepal.Width)) +
+  geom_histogram()
+diff(range(iris$Sepal.Width)) / 30
+
+ggplot(iris, aes(x = Sepal.Width)) +
+  geom_histogram(binwidth = 0.1)
+
+# internal data frame with y re-labeled
+ggplot(iris, aes(x = Sepal.Width)) +
+  geom_histogram(aes(y = ..density..), binwidth = 0.1)
+
+# different species
+ggplot(iris, aes(x = Sepal.Width, fill = Species)) +
+  geom_histogram(binwidth = 0.1)
+
+ggplot(iris, aes(x = Sepal.Width, fill = Species)) +
+  geom_histogram(binwidth = 0.1, position = "stack")
+
+ggplot(iris, aes(x = Sepal.Width, fill = Species)) +
+  geom_histogram(binwidth = 0.1, position = "dodge")
+
+ggplot(iris, aes(x = Sepal.Width, fill = Species)) +
+  geom_histogram(binwidth = 0.1, position = "fill")
+```
+
+3. Bar plot
+
+* geom_bar()
+
+* All positions from before available
+
+* Two types
+
+Absolute counts and Distributions
+
+```{r}
+library(plyr)
+library(reshape2)
+iris_melted <- melt(iris, value.name = "Value", variable.name = "Measure") 
+iris_summ <- ddply(iris_melted[iris_melted$Measure == "Sepal.Width",], "Species", summarise, avg = mean(Value), stdev = sd(Value))
+str(iris_summ)
+
+
+ggplot(iris_summ, aes(x = Species, y = avg)) +
+  geom_bar(stat = "identity")
+
+ggplot(iris_summ, aes(x = Species, y = avg)) +
+  geom_bar(stat = "identity", fill = "grey50") +
+  geom_errorbar(aes(ymin = avg - stdev, ymax = avg + stdev),width = 0.2)
+```
+
+
+### Practice
+
+**The x axis/aesthetic**: The documentation for *geom_histogram()* states the argument *stat = "bin"* as a default. Recall that histograms cut up a continuous variable into discrete bins - that's what the stat "bin" is doing. You always get 30 evenly-sized bins by default, which is specified with the default argument *binwidth = range/30*. This is a pretty good starting point if you don't know anything about the variable being ploted and want to start exploring.
+
+**The y axis/aesthetic**: *geom_histogram()* only requires one aesthetic: *x*. But there is clearly a *y* axis on your plot, so where does it come from? Actually, there is a variable mapped to the y aesthetic, it's called *..count..*. When *geom_histogram()* executed the binning statistic (see above), it not only cut up the data into discrete bins, but it also counted how many values are in each bin. So there is an internal data frame where this information is stored. The *..* calls the variable *count* from this internal data frame. This is what appears on the *y* aesthetic. But it gets better! The density has also been calculated. This is the proportional frequency of this bin in relation to the whole data set. You use *..density..* to access this information.
+
+```{r}
+# 1 - Make a univariate histogram
+ggplot(mtcars, aes(x = mpg)) +
+  geom_histogram()
+
+# 2 - Plot 1, plus set binwidth to 1 in the geom layer
+ggplot(mtcars, aes(x = mpg)) +
+  geom_histogram(binwidth = 1)
+
+# 3 - Plot 2, plus MAP ..density.. to the y aesthetic (i.e. in a second aes() function)
+ggplot(mtcars, aes(x = mpg)) +
+  geom_histogram(binwidth = 1, aes(y = ..density..))
+
+# 4 - plot 3, plus SET the fill attribute to "#377EB8"
+ggplot(mtcars, aes(x = mpg)) +
+  geom_histogram(binwidth = 1, aes(y = ..density..),fill = "#377EB8")
+
+
+```
+
+Three position arguments will be introduced here:
+
+* stack: place the bars on top of each other. Counts are used. This is the default position.
+
+* fill: place the bars on top of each other, but this time use proportions.
+
+* dodge: place the bars next to each other. Counts are used.
+
+```{r}
+# Draw a bar plot of cyl, filled according to am
+ggplot(mtcars, aes(x = cyl, fill = as.factor(am))) +
+  geom_bar()
+
+# Change the position argument to stack
+ggplot(mtcars, aes(x = cyl, fill = as.factor(am))) +
+  geom_bar(position = "stack")
+
+# Change the position argument to fill
+ggplot(mtcars, aes(x = cyl, fill = as.factor(am))) +
+  geom_bar(position = "fill")
+
+# Change the position argument to dodge
+ggplot(mtcars, aes(x = cyl, fill = as.factor(am))) +
+  geom_bar(position = "dodge")
+
+```
+
+
+Instead of using *position = "dodge"* you're going to use *position_dodge()*, like you did with *position_jitter()* in the Scatter plots and jittering exercise. Here, you'll save this as an object, *posn_d*, so that you can easily reuse it.
+
+Remember, the reason you want to use *position_dodge()* (and *position_jitter()*) is to specify how much dodging (or jittering) you want.
+
+```{r}
+# 1 - The last plot form the previous exercise
+ggplot(mtcars, aes(x = cyl, fill = as.factor(am))) +
+  geom_bar(position = "dodge")
+
+# 2 - Define posn_d with position_dodge()
+posn_d <- position_dodge(width=0.2)
+
+# 3 - Change the position argument to posn_d
+ggplot(mtcars, aes(x = cyl, fill = as.factor(am))) +
+  geom_bar(position = posn_d)
+
+# 4 - Use posn_d as position and adjust alpha to 0.6
+ggplot(mtcars, aes(x = cyl, fill = as.factor(am))) +
+  geom_bar(position = posn_d,alpha = 0.6)
+
+
+```
+
+Using the same data and base layers as in the previous two plots, create a plot with a *geom_freqpoly()*. Because you're no longer working with bars, change the *aes()* function: *cyl* should be mapped onto *color*, not onto *fill*.
+
+
+```{r}
+# A basic histogram, add coloring defined by cyl
+ggplot(mtcars, aes(mpg,fill = as.factor(cyl))) +
+  geom_histogram(binwidth = 1)
+
+# Change position to identity
+ggplot(mtcars, aes(mpg,fill = as.factor(cyl))) +
+  geom_histogram(binwidth = 1,position = "identity")
+
+# Change geom to freqpoly (position is identity by default)
+ggplot(mtcars, aes(mpg,col = as.factor(cyl))) +
+  geom_freqpoly(binwidth = 1,position = "identity")
+
+```
+
+
+You can set the color palette used to fill the bars with *scale_fill_brewer()*. For a full list of possible color sets, have a look at *?brewer.pal*.
+
+```{r}
+# Example of how to use a brewed color palette
+ggplot(mtcars, aes(x = cyl, fill = as.factor(am))) +
+  geom_bar() +
+  scale_fill_brewer(palette = "Set1")
+
+# Use str() on Vocab to check out the structure
+str(Vocab)
+
+# Plot education on x and vocabulary on fill
+# Use the default brewed color palette
+ggplot(Vocab, aes(x = education, fill = as.factor(vocabulary))) +
+  geom_bar(position = "fill") +
+  scale_fill_brewer(palette = "Set1")
+
+
+```
+
+For continuous data, the default *RColorBrewer* palette that *scale_fill_brewer()* calls is "*Blues*". There are only 9 colours in the palette, and since you have 11 categories, your plot looked strange.
+
+Here you'll manually create a color palette that can generate all the colours you need. To do this you'll use a function called *colorRampPalette()*.
+
+The input is a character vector of 2 or more colour values, e.g. "*#FFFFFF*" (white) and "*#0000FF*" (pure blue). (See this exercise for a discussion on hexadecimal codes).
+
+The output is itself a function! So when you assign it to an object, that object should be used as a function.
+
+```{r}
+new_col <- colorRampPalette(c("#FFFFFF", "#0000FF"))
+new_col(4) # the newly extrapolated colours
+munsell::plot_hex(new_col(4)) # Quick and dirty plot
+```
+
+*new_col()* is a function that takes one argument: the number of colours you want to extrapolate. You want to use nicer colours, so we've assigned the entire "*Blues*" colour palette from the *RColorBrewer* package to the character vector *blues.*
+
+
+
+```{r}
+# Final plot of last exercise
+ggplot(Vocab, aes(x = education, fill = as.factor(vocabulary))) +
+  geom_bar(position = "fill") +
+  scale_fill_brewer()
+
+# Definition of a set of blue colors
+library("RColorBrewer")
+blues <- brewer.pal(9, "Blues") # from the RColorBrewer package
+
+# 1 - Make a color range using colorRampPalette() and the set of blues
+blue_range <- colorRampPalette(blues)
+
+# 2 - Use blue_range to adjust the color of the bars, use scale_fill_manual()
+ggplot(Vocab, aes(x = education, fill = as.factor(vocabulary))) +
+  geom_bar(position = "fill") +
+  scale_fill_manual(values = blue_range(11))
+
+```
+
+
+
+```{r}
+# 1 - Basic histogram plot command
+ggplot(mtcars, aes(mpg)) +
+  geom_histogram(binwidth = 1)
+
+# 2 - Plot 1, Expand aesthetics: am onto fill
+ggplot(mtcars, aes(mpg,fill = as.factor(am))) +
+  geom_histogram(binwidth = 1)
+
+# 3 - Plot 2, change position = "dodge"
+ggplot(mtcars, aes(mpg,fill = as.factor(am))) +
+  geom_histogram(binwidth = 1,position = "dodge")
+
+# 4 - Plot 3, change position = "fill"
+ggplot(mtcars, aes(mpg,fill = as.factor(am))) +
+  geom_histogram(binwidth = 1,position = "fill")
+
+# 5 - Plot 4, plus change position = "identity" and alpha = 0.4
+ggplot(mtcars, aes(mpg,fill = as.factor(am))) +
+  geom_histogram(binwidth = 1,position = "identity",alpha = 0.4)
+
+# 6 - Plot 5, plus change mapping: cyl onto fill
+ggplot(mtcars, aes(mpg,fill = as.factor(cyl))) +
+  geom_histogram(binwidth = 1,position = "identity",alpha = 0.4)
+
+```
+## Line plots
+
+```{r eval = FALSE}
+
+ggplot(beaver, aes(x = time, y = temp)) +
+  geom_line()
+
+ggplot(beaver, aes(x = time, y = temp, col = factor(active))) +
+  geom_line()
+
+# Aesthetics - categorical variables
+
+# linetype
+ggplot(fish, aes(x = Year, y = Capture, linetype = Species)) +
+  geom_line()
+
+# size
+ggplot(fish, aes(x = Year, y = Capture, size = Species)) +
+  geom_line()
+
+# color
+ggplot(fish, aes(x = Year, y = Capture, color = Species)) +
+  geom_line()
+
+# fill
+ggplot(fish, aes(x = Year, y = Capture, fill = Species)) +
+  geom_area()
+ggplot(fish, aes(x = Year, y = Capture, fill = Species)) +
+  geom_area(position = "fill")
+
+# geom_ribbon
+ggplot(fish, aes(x = Year, y = Capture, fill = Species)) +
+  geom_ribbon(aes(ymax = Capture, ymin = 0), alpha = 0.3)
+
+
+
+```
+
+
+### Practice
+
+
+
+```{r}
+  # Print out head of economics
+head(economics)
+
+# Plot unemploy as a function of date using a line plot
+ggplot(economics, aes(x = date, y = unemploy)) + geom_line()
+
+# Adjust plot to represent the fraction of total population that is unemployed
+ggplot(economics, aes(x = date, y = unemploy/pop)) + geom_line()
+
+```
+
+The *geom_rect()* command shouldn't inherit aesthetics from the base *ggplot()* command it belongs to. It would result in an error, since you're using a different dataset and it doesn't contain *unemploy* or *pop.* That's why you should specify *inherit.aes = FALSE* in *geom_rect()*
+
+```{r}
+# Basic line plot
+ggplot(economics, aes(x = date, y = unemploy/pop)) +
+  geom_line()
+
+# Expand the following command with geom_rect() to draw the recess periods
+begin <- c("1969-12-01","1973-11-01","1980-01-01","1981-07-01","1990-07-01","2001-03-01")
+end <- c("1970-11-01","1975-03-01","1980-07-01","1982-11-01","1991-03-01","2001-11-01")
+recess <- data.frame(begin, end)
+recess$begin <- as.Date(recess$begin,format = "%Y-%m-%d")
+recess$end <- as.Date(recess$end,format = "%Y-%m-%d")
+# mutate(recess, begin = as.Date(begin,format = "%Y-%m-%d"))
+str(recess)
+
+ggplot(economics, aes(x = date, y = unemploy/pop)) +
+  geom_rect(data = recess,
+         aes(xmin = begin, xmax = end, ymin = -Inf, ymax = +Inf),
+         inherit.aes = FALSE, fill = "red", alpha = 0.2) +
+  geom_line()
+```
+
+
+The dataset you'll use contains the global capture rates of seven salmon species from 1950 - 2010.
+
+In your workspace, the following dataset is available:
+
+fish.species: Each variable (column) is a Salmon Species and each observation (row) is one Year.
+To get a multiple time series plot, however, both Year and Species should be in their own column. You need tidy data: one variable per column. Once you have that you can get the plot shown in the viewer by mapping Year to the x aesthetic and Species to the color aesthetic.
+
+You'll use the gather() function of the tidyr package, which is already loaded for you.
+
+1. Use gather() to move from fish.species to a tidy data frame, fish.tidy. This data frame should have three columns: Year (int), Species (factor) and Capture (int).
+
+2£¬ gather() takes four arguments: the original data frame (fish.species), the name of the key column (Species), the name of the value column (Capture) and the name of the grouping variable, with a minus in front (-Year). They can all be specified as object names (i.e. no "").
+
+```{r}
+fish.species <- read_csv("fish.species.csv")
+fish.species <- fish.species[c("Year","Pink","Chum","Sockeye","Coho","Rainbow","Chinook","Atlantic")]
+head(fish.species)
+# Check the structure as a starting point
+str(fish.species)
+
+# Use gather to go from fish.species to fish.tidy
+library("tidyr")
+library("reshape2")
+fish.tidy <- gather(fish.species, Species, Capture, -Year)
+head(fish.tidy)
+```
+
+
+```{r}
+# Recreate the plot shown on the right
+ggplot(fish.tidy, aes(x = Year, y = Capture,col = Species)) + geom_line()
+```
+
+

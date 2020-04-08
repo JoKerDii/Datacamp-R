@@ -1,0 +1,141 @@
+---
+title: "Datacamp_Data Visualization with ggplot2 (Part 1)_Introduction"
+author: "dizhen"
+date: "2019/4/6"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+```{r}
+# Load the ggplot2 package
+library(ggplot2)
+
+# Explore the mtcars data frame with str()
+str(mtcars)
+head(mtcars)
+```
+
+```{r}
+ggplot(mtcars, aes(x = cyl, y = mpg)) +
+  geom_point()
+
+# cyl is treated as factor
+ggplot(mtcars, aes(x = factor(cyl), y = mpg)) +
+  geom_point()
+```
+
+## Grammer of Graphics
+
+Essential Grammatic Elements:
+
+1. Data: The dataset being plotted. (variables of interest)
+
+2. Asethetics: The scales onto which we map our data. (x-axis, y-axis; colour, fill; size, labels; alpha, shape; line width, line type)
+
+3. Geometries: The visual element used for out data. (point, line, histogram, bar, boxplot)
+
+4. Facets: plotting small multiples (columns, rows)
+
+5. Statistics: Representations of our data to aid understanding (binning, smoothing, descriptive, inferential)
+
+6. Coordinates: The space on which the data will be plotted (cartesian, fixed, polar, limits)
+
+7. Themes: All non-data ink. (non-data ink)
+
+```{r}
+ggplot(mtcars, aes(x = wt, y = mpg)) +
+  geom_point()
+
+# color changes by disp (continuous)
+ggplot(mtcars, aes(x = wt, y = mpg, color = disp)) +
+  geom_point()
+
+# size changes by disp (continuous)
+ggplot(mtcars, aes(x = wt, y = mpg, size = disp)) +
+  geom_point()
+```
+
+As "shape" only makes sense with categorical data, and *disp* is cotinuous. So the code below is incorrect.
+```{r eval = FALSE}
+ggplot(mtcars, aes(x = wt, y = mpg, shape = disp)) +
+  geom_point()
+```
+
+## ggplot 2
+
+```{r}
+# Explore the diamonds data frame with str()
+str(diamonds)
+head(diamonds)
+```
+
+```{r}
+# Add geom_point() for scatter plot
+ggplot(diamonds, aes(x = carat, y = price)) + geom_point()
+
+# Add geom_point() and geom_smooth() 
+ggplot(diamonds, aes(x = carat, y = price))+ geom_point() + geom_smooth()
+
+```
+
+
+```{r}
+# 1 - The plot you created in the previous exercise
+ggplot(diamonds, aes(x = carat, y = price)) +
+  geom_point() +
+  geom_smooth()
+
+# 2 - show only the smooth line
+ggplot(diamonds, aes(x = carat, y = price)) +
+  geom_smooth()
+
+
+# 3 - assign the correct value to col in aes()
+# different color of smooths by different clarity
+ggplot(diamonds, aes(x = carat, y = price, color = clarity)) +
+  geom_smooth()
+
+
+# 4 -  Plot only the points with argument alpha.
+# different color of points by different clarity
+# change the transparent as 40% visible
+ggplot(diamonds, aes(x = carat, y = price, color = clarity)) +
+  geom_point(alpha = 0.4) 
+```
+
+```{r}
+# Create the object containing the data and aes layers: dia_plot
+dia_plot <- ggplot(diamonds, aes(x = carat, y = price))
+
+# Add a geom layer with + and geom_point()
+dia_plot + geom_point()
+
+# Add the same geom layer, but with aes() inside
+# can also call aes() within the geom_point() function
+dia_plot + geom_point(aes(color = clarity))
+
+```
+
+```{r}
+# 1 - The dia_plot object has been created 
+dia_plot <- ggplot(diamonds, aes(x = carat, y = price))
+
+# 2 - Expand dia_plot by adding geom_point() with alpha set to 0.2
+dia_plot <- dia_plot + geom_point(alpha = 0.2)
+
+# 3 - Plot dia_plot with additional geom_smooth() with se set to FALSE
+# do not include standard error
+dia_plot + geom_smooth(se = FALSE)
+
+# 4 - Copy the command from above and add aes() with the correct mapping to geom_smooth()
+dia_plot + geom_smooth(aes(col = clarity), se = FALSE)
+```
+
+
