@@ -1,26 +1,120 @@
 ---
-title: "wwThemes"
+title: "Datacamp_Data Visualization with ggplot2 (Part 2)_Themes"
 author: "dizhen"
-date: "2019Äê4ÔÂ11ÈÕ"
-output: html_document
+date: "2019/4/11"
+output:
+  pdf_document: default
+  html_document: default
 ---
-# Rectangles
-To understand all the arguments for the themes, you'll modify an existing plot over the next series of exercises.
 
-Here you'll focus on the rectangles of the plotting object z that has already been created for you. If you type z in the console, you can check it out. The goal is to turn z into the plot in the viewer. Do this by following the instructions step by step.
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
-Instructions
+## Themes
 
-1. Plot 1: In the theme() function added to z, set the plot.background argument to element_rect(fill = myPink). myPink is already available in the workspace for you.
+1. Themes Layer
 
-2. Plot 2: Expand your code for Plot 1 by adding a border to the plot.background. Do this by adding 2 arguments to the element_rect() function in theme(): color and size. Set them to "black" and 3, respectively.
+* All the non-data ink
 
-3. Plot 3: we don't want the plot panels and legend to appear as they are in Plot 2. A short cut is to remove all rectangles, as defined in the theme object no_panels, and then draw the one we way in the way we want. Copy your theme() layer from Plot 2 and add it to no_panels.
+* Visual elements not part of data
+
+* Three types
+
+text: element_text() 
+
+line: element_line()
+
+rectangle: element_rect()
+
+
+```{r eval = FALSE}
+# Inheritance
+theme(
+  text = element_text()
+    title
+      plot.title
+      legend.title
+    axis.title
+      axis.title.x
+      axis.title.y
+    legend.text
+    axis.text
+      axis.text.x
+      axis.text.y
+    strip.text
+      strip.text.x
+      strip.text.y
+)
+
+theme(
+  line = element_line()
+    axis.ticks
+      axis.ticks.x
+      axis.ticks.y
+    axis.line
+      axis.line.x
+      axis.line.y
+    panel.grid
+      panel.grid.major
+        panel.grid.major.x
+        panel.grid.major.y
+      panel.grid.minor
+        panel.grid.minor.x
+        panel.grid.minor.y
+)
+
+theme(      
+  rect = element_rect()
+    legend.background
+    legend.key
+    panel.background
+    panel.border
+    plot.background
+    strip.background 
+)
+```
+
+
+2. element_blank
+
+```{r eval = FALSE}
+theme(
+  text = element_blank()
+  line = element_blank()
+  rect = element_blank()
+  )
+```
+
+### Practice
+
+```{r}
+# Basic scatter plot
+library("ggplot2")
+library("RColorBrewer")
+
+mycol <- brewer.pal(9,"Blues")[c(4,6,8)]
+
+z<-ggplot(mtcars, aes(x = wt, y = mpg, col = factor(cyl))) +
+  geom_point() +
+  facet_wrap(~ cyl,scale = "free_y") +
+  scale_color_brewer("Cylinders") +
+  scale_color_manual(values = mycol) +
+  geom_smooth(se = FALSE, method = "lm") +
+  scale_y_continuous("Miles/(US) gallon", limits = c(8,35)) +
+  scale_x_continuous("Weight(lb/1000)", limits = c(1.6,5.6)) 
+
+z  
+
+```
+
+Rectangle
+
 
 ```{r}
 # Starting point
 z
-
+myPink <- "#FEE0D2"
 # Plot 1: Change the plot background fill to myPink
 z +
   theme(plot.background = element_rect(fill = myPink))
@@ -33,44 +127,27 @@ z +
 no_panels <- theme(rect = element_blank())
 
 # Plot 3: Combine custom themes
-z +
+z<-z +
   no_panels +
   theme(plot.background = element_rect(fill = myPink,color = "black", size = 3)) # from plot 2
+z
+
 ```
 
-# Lines
-To change the appearance of lines use the element_line() function.
-
-The plot you created in the last exercise, with the fancy pink background, is available as the plotting object z. Your goal is to produce the plot in the viewer - no grid lines, but red axes and tick marks.
-
-For each of the arguments that specify lines, use element_line() to modify attributes. e.g. element_line(color = "red").
-
-Remember, to remove a non-data element, use element_blank().
-
-Instructions
-
-Starting with object z, add a theme() function to:
-
-1. remove the grid lines using the panel.grid argument.
-
-2. add red axis lines using the axis.line argument.
-
-3. change the tick marks to red using the axis.ticks argument, similar to how you specified axis.line.
+Line
 
 ```{r}
 # Extend z using theme() function and 3 args
-z + theme(panel.grid = element_blank(), axis.line = element_line(color = "red"), axis.ticks = element_line(color = "red"))
+z<- z + theme(panel.grid = element_blank(), 
+          axis.line = element_line(color = "red"),
+          axis.ticks = element_line(color = "red"))
+z
 ```
-# Text
-Next we can make the text on your plot prettier and easier to spot. You can do this through the element_text() function and by passing the appropriate arguments inside the theme() function.
 
-As before, the plot you've created in the previous exercise is available as z. The plot you should end up with after successfully completing this exercises is shown in the viewer.
 
-Instructions
+Text
 
-Starting from z, add a theme() function to:
-
-1. Change the appearance of the strip text, that is the text in the facet strips. Specify strip.text with element_text(). The size of the text should be 16, the color should be myRed, a color that is predefined for you.
+1. Change the appearance of the strip text, that is the text in the facet strips. Specify strip.text with element_text()
 
 2. Change the axis titles. Specify both axes with the axis.title argument and use element_text() to set the parameters: color = myRed, hjust = 0 (to put the text in the bottom left corner) and face = "italic".
 
@@ -79,21 +156,17 @@ Starting from z, add a theme() function to:
 ```{r}
 # Original plot, color provided
 z
-myRed
+myRed <- "#99000D"
 
 # Extend z with theme() function and 3 args
-z +
+z<- z +
   theme(strip.text = element_text(size = 16, color = myRed),
         axis.title = element_text(color = myRed, hjust = 0, face = "italic"),
         axis.text = element_text(color = "black"))
+z
 ```
 
-# Legends
-The themes layer also allows you to specify the appearance and location of legends.
-
-The plot you've coded up to now is available as z. It's also displayed in the viewer. Solve the instructions and compare the resulting plots with the plot you started with.
-
-Instructions
+Legends
 
 1. Add a theme() function to z to change the legend's location. Do this by specifying the legend.position argument to be c(0.85, 0.85). This will make the legend appear in the top right of the plot, inside the third facet.
 
@@ -117,19 +190,19 @@ z +
   theme(legend.position = "bottom")
 
 # Remove legend entirely
-z +
+z<- z +
   theme(legend.position = "none")
+z
 ```
-# Positions
-The different rectangles of your plot have spacing between them. There's spacing between the facets, between the axis labels and the plot rectangle, between the plot rectangle and the entire panel background, etc. Let's experiment!
 
-The last plot you created in the previous exercise, without a legend, is available as z
+Position
 
-Instructions
+The different rectangles of your plot have spacing between them. There's spacing between the facets, between the axis labels and the plot rectangle, between the plot rectangle and the entire panel background, etc. 
 
-1. Suppose you want to have more spacing between the different facets. You can control this by specifying panel.spacing.x inside a theme() function you add to z. For the argument value, you should pass a unit object. To achieve this, load the grid package with library(). Next, set panel.spacing.x to unit(2, "cm").
 
-2. Copy, adapt and paste the plot command for the previous instruction: to adjust the plot margin, set plot.margin to unit(c(1,2,1,1), "cm") (spacing for top, right, bottom, and left margins).
+1. Suppose you want to have more spacing between the different facets. You can control this by specifying panel.spacing.x inside a theme() function you add to z. For the argument value, you should pass a unit object.
+
+2. To adjust the plot margin, set plot.margin to unit(c(1,2,1,1), "cm") (spacing for top, right, bottom, and left margins).
 
 ```{r}
 # Increase spacing between facets
@@ -141,14 +214,159 @@ z + theme(panel.spacing.x = unit(2,"cm"), plot.margin = unit(c(1,2,1,1),"cm"))
 
 ```
 
-# Updating Themes
-Building your themes every time from scratch can become a pain and unnecessarily bloat your scripts. In the following exercises, we'll practice different ways of managing, updating and saving themes.
 
-A plot object z2 is already created for you on the right. It shows mpg against wt for the mtcars dataset, faceted according to cyl. Also the colors myPink and myRed are available. In the previous exercises you've already customized the rectangles, lines and text on the plot. This theme layer is now separately stored as theme_pink, as shown in the sample code.
+## Recycling Themes
 
-theme_update() updates the default theme used by ggplot2. The arguments for theme_update() are the same as for theme(). When you call theme_update() and assign it to an object (e.g. called old), that object stores the current default theme, and the arguments update the default theme. If you want to restore the previous default theme, you can get it back by using theme_update() again. Let's see how:
+* Many plots
 
-Instructions
+* Consistency in style
+
+* Apply specific theme everywhere
+
+```{r}
+  
+z <- ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, col = Species)) +
+  geom_jitter(alpha = 0.7) +
+  scale_color_brewer("Species", palette = "Dark2", labels = c("Setosa", "Versicolor", "Virginica")) +
+  scale_y_continuous("Width (cm)", limits = c(2, 4.5), expand = c(0, 0)) +
+  scale_x_continuous("Length (cm)", limits = c(4, 8), expand = c(0, 0)) +
+  ggtitle("Sepals") +
+  coord_fixed(1)
+z
+
+z + theme(panel.background = element_blank(),
+          legend.background = element_blank(),
+          legend.key = element_blank(),
+          panel.grid = element_blank(),
+          axis.text = element_text(colour = "black"),
+          axis.line = element_line(colour = "black"))
+```
+
+Save theme
+
+```{r}
+theme_iris <- theme(panel.background = element_blank(),
+                    legend.background = element_blank(),
+                    legend.key = element_blank(),
+                    panel.grid = element_blank(),
+                    axis.text = element_text(colour = "black"),
+                    axis.line = element_line(colour = "black"))
+z
+z+ theme_iris
+
+```
+
+Reuse theme
+
+```{r}
+library(tidyr)
+library(tidyverse)
+
+iris$Flower <- 1:nrow(iris)
+
+iris.wide <- iris %>%
+  gather(key, value, -Flower, -Species) %>%
+  separate(key, c("Part", "Measure"), "\\.") %>%
+  spread(Measure, value)
+
+m <- ggplot(iris.wide, aes(x = Length, y = Width, col = Part)) + 
+  geom_point() +
+  facet_grid(. ~ Species)
+m + theme_iris
+
+```
+
+Extend theme
+
+```{r}
+theme_iris <- theme_iris + theme(strip.background = element_blank()) 
+m + theme_iris
+
+```
+
+Discrete x-axis
+
+```{r}
+library(tidyr)
+library(tidyverse)
+iris.tidy <- iris %>%
+  gather(key, Value, -Flower, -Species) %>%
+  separate(key, c("Part", "Measure"), "\\.")
+
+p <- ggplot(iris.tidy, aes(x = Measure, y = Value, col = Part)) +
+  geom_point(position = position_jitter(0.1), alpha = 0.6,
+  width = 0.4) +
+  scale_y_continuous("Value (cm)", limits = c(0, 8),
+  expand = c(0, 0)) +
+  facet_grid(. ~ Species) 
+p
+```
+
+Derivative theme
+
+```{r}
+theme_iris_disX <- theme_iris + 
+  theme(axis.line.x = element_blank(),
+        axis.ticks.x = element_blank(), 
+        axis.text.x = element_text(angle = 45, hjust = 1))
+  
+p + theme_iris_disX
+```
+
+Built-in theme templates
+
+```{r}
+z + theme_iris
+z + theme_classic()
+
+m + theme_classic()
+m + theme_classic() +
+  theme(strip.background = element_blank())
+
+```
+
+ggthemes
+
+```{r}
+# install.packages("ggthemes")
+library(ggthemes) 
+z + theme_tufte()
+```
+
+Theme update
+
+```{r}
+original <- theme_update(panel.background = element_blank(),
+   legend.background = element_blank(),
+   legend.key = element_blank(),
+   panel.grid = element_blank(),
+   axis.text = element_text(colour = "black"),
+   axis.line = element_line(colour = "black"),
+   axis.ticks = element_line(colour = "black"),
+   strip.background = element_blank())
+
+```
+
+theme_set
+
+```{r}
+theme_set(original)
+z
+theme_set(theme_tufte())
+z
+m
+# back to original
+theme_set(original) # saved earlier using theme_update()
+z
+```
+
+### Practice
+
+Updating Themes
+
+In the previous exercises you've already customized the rectangles, lines and text on the plot. This theme layer is now separately stored as theme_pink, as shown in the sample code.
+
+theme_update() updates the default theme used by ggplot2. The arguments for theme_update() are the same as for theme(). When you call theme_update() and assign it to an object (e.g. called old), that object stores the current default theme, and the arguments update the default theme. If you want to restore the previous default theme, you can get it back by using theme_update() again.
 
 1 - "Apply" theme_pink to z2 to carry out all customizations.
 
@@ -160,7 +378,14 @@ Instructions
 
 ```{r}
 # Original plot
-z2
+z2 <- ggplot(mtcars, aes(x = wt, y = mpg, col = factor(cyl))) +
+  geom_point() +
+  facet_wrap(~ cyl,scale = "free_y") +
+  scale_color_brewer("Cylinders") +
+  scale_color_manual(values = mycol) +
+  geom_smooth(se = FALSE, method = "lm") +
+  scale_y_continuous("Miles/(US) gallon", limits = c(8,35)) +
+  scale_x_continuous("Weight(lb/1000)", limits = c(1.6,5.6)) 
 
 # Theme layer saved as an object, theme_pink
 theme_pink <- theme(panel.background = element_blank(),
@@ -207,7 +432,9 @@ theme_set(old)
 z2 + theme_set(old)
 
 ```
-# Exploring ggthemes
+
+Exploring ggthemes
+
 There are many themes available by default in ggplot2: theme_bw(), theme_classic(), theme_gray(), etc. In the previous exercise, you saw that you can apply these themes to all following plots, with theme_set():
 
 theme_set(theme_bw())
@@ -216,31 +443,18 @@ But you can also apply them on an individual plot, with:
 
 ... + theme_bw()
 
-You can also extend these themes with your own modifications. In this exercise, you'll experiment with this and use some preset templates available from the ggthemes package. The workspace already contains the same basic plot from before under the name z2.
 
-Instructions
-
-1. Create a custom theme, assigning it to custom_theme.
-
-2. Call theme_tufte() with no arguments.
-
-3. Add a call to theme() as follows.
-
-4. Set legend.position to c(0.9, 0.9).
-
-5. Set legend.title to an "italic" text of size 12. Use element_text(face = ___, size = ___).
-
-6. Set axis.title to a "bold" text of size 14. Use element_text(face = ___, size = ___).
-
-7. Plot z2 with the customized theme. (You don't need parentheses.)
-
-8. Make custom_theme the default by calling theme_set().
-
-9. Plot z2 again.
 
 ```{r}
 # Original plot
-z2
+z2 <- ggplot(mtcars, aes(x = wt, y = mpg, col = factor(cyl))) +
+  geom_point() +
+  # facet_wrap(~ cyl,scale = "free_y") +
+  scale_color_brewer("Cylinders") +
+  scale_color_manual(values = mycol) +
+  geom_smooth(se = FALSE, method = "lm") +
+  scale_y_continuous("Miles/(US) gallon", limits = c(8,35)) +
+  scale_x_continuous("Weight(lb/1000)", limits = c(1.6,5.6)) 
 
 # Load ggthemes
 library(ggthemes)

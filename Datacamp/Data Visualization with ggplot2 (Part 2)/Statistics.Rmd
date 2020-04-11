@@ -1,32 +1,94 @@
 ---
 title: "Datacamp_Data Visualization with ggplot2 (Part 2)__Statistics"
 author: "dizhen"
-date: "2019Äê4ÔÂ10ÈÕ"
-output: html_document
+date: "2019/4/10"
+output:
+  pdf_document: default
+  html_document: default
 ---
-# Smoothing
-Welcome to the exercises for the second ggplot2 course!
 
-To practice on the remaining four layers (statistics, coordinates, facets and themes), we'll continue working on several datasets that we already encountered in the first course.
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
-The mtcars dataset contains information for 32 cars from Motor Trends magazine from 1973. This dataset is small, intuitive, and contains a variety of continuous and categorical (both nominal and ordinal) variables.
+## Statistics with Geoms
 
-In the previous course we learned how to effectively use some basic geometries, such as point, bar and line. In the first chapter of this course we'll explore statistics associated with specific geoms, for example, smoothing and lines.
+1. Statistics Layer
 
-Instructions
+Two categories of functions 
 
-1. Familiarize yourself again with the mtcars dataset using str().
+* Called from within a geom
 
-2. Extend the first ggplot call: add a LOESS smooth to the scatter plot (which is the default) with geom_smooth(). We want to have the actual values and the smooth on the same plot.
+* Called independently 
 
-3. Change the previous plot to use an ordinary linear model, by default it will be y ~ x, so you don't have to specify a formula. You should set the method argument to "lm".
+2. geom_ <-> stat_
 
-4. Modify the previous plot to remove the 95% CI ribbon. You should set the se argument to FALSE.
+* geom_histogram() <-> stat_bin() 
 
-5, Modify the previous plot to show only the model, and not the underlying dots.
+* geom_bar() <-> stat_bin()
+
+* geom_freqpoly() <-> stat_bin()
+
+* geom_smooth() <-> stat_smooth()
+
+3. Other stat_ functions
+
+stat_ <-> geom_
+
+stat_bin() <-> geom_histogram()
+
+stat_bin() <-> geom_bar()
+
+stat_bin() <-> geom_freqpoly()
+
+stat_smooth() <-> geom_smooth()
+
+stat_boxplot() <-> geom_boxplot()
+
+stat_bindot() <-> geom_dotplot()
+
+stat_bin2d() <-> geom_bin2d()
+
+stat_binhex() <-> geom_hex()
+
+stat_contour() <-> geom_contour()
+
+stat_quantile() <-> geom_quantile()
+
+stat_sum() <-> geom_count()
+
+
 
 ```{r}
-# ggplot2 is already loaded
+
+library("ggplot2")
+
+# geom_ <-> stat_
+p <- ggplot(iris, aes(x = Sepal.Width))
+p + geom_histogram()
+p + geom_bar()
+p + stat_bin()
+
+# grouping by fill
+ggplot(mtcars, aes(x = factor(cyl), fill = factor(am))) +
+  geom_bar()
+# ggplot(mtcars, aes(x = factor(cyl), fill = factor(am))) +
+#   stat_bin() # stat_bin require a continuous x variable
+
+ggplot(mtcars, aes(x = mpg)) +
+  geom_histogram(fill = "skyblue") +
+  geom_freqpoly(col = "red") 
+
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, col = Species)) +
+  geom_point() +
+  geom_smooth(method = "lm",se = FALSE, span = 0.4, fullrange = TRUE)
+
+
+```
+
+### Practice
+
+```{r}
 
 # Explore the mtcars data frame with str()
 str(mtcars)
@@ -47,24 +109,9 @@ ggplot(mtcars, aes(x = wt, y = mpg)) +
 ggplot(mtcars, aes(x = wt, y = mpg)) + geom_smooth(method = "lm",se = FALSE)
 ```
 
-# Grouping variables
-We'll continue with the previous exercise by considering the situation of looking at sub-groups in our dataset. For this we'll encounter the invisible group aesthetic.
+For 2, add a group aesthetic inside the aes() of this new stat_smooth(), set it to a dummy variable, 1.
 
-Instructions
-
-A plot that maps cyl onto the col aesthetic is already coded.
-
-1. Change col so that factor(cyl) is mapped onto it instead of just cyl.
-
-Note: In this ggplot command our smooth is calculated for each subgroup because there is an invisible aesthetic, group which inherits from col.
-
-2. Complete the second ggplot command.
-
-3. Add another stat_smooth() layer with exactly the same attributes (method set to "lm", se to FALSE).
-
-4. Add a group aesthetic inside the aes() of this new stat_smooth(), set it to a dummy variable, 1.
 ```{r}
-# ggplot2 is already loaded
 
 # 1 - Define cyl as a factor variable
 ggplot(mtcars, aes(x = wt, y = mpg, col = factor(cyl))) +
@@ -78,24 +125,20 @@ ggplot(mtcars, aes(x = wt, y = mpg, col = factor(cyl))) +
 
 ```
 
-# Modifying stat_smooth
-In the previous exercise we used se = FALSE in stat_smooth() to remove the 95% Confidence Interval. Here we'll consider another argument, span, used in LOESS smoothing, and we'll take a look at a nice scenario of properly mapping different models.
-
-ggplot2 is already loaded and several of the linear models we looked at in the two previous exercises are already given.
-
-Instructions
 
 Plot 1: Recall that LOESS smoothing is a non-parametric form of regression that uses a weighted, sliding-window, average to calculate a line of best fit. We can control the size of this window with the span argument.
 
-Add span, set it to 0.7.
 Plot 2: In this plot, we set a linear model for the entire dataset as well as each subgroup, defined by cyl. In the second stat_smooth(),
 
 Set method to "loess" (this is the default with a small (n < 1000) data set, but we will specify it explicitly).
 Add span, set it to 0.7.
+
 Plot 3: Plot 2 presents a problem because there is a black line on our plot that is not included in the legend. To get this, we need to map something to col as an aesthetic, not just set col as an attribute.
 
 Add col to the aes() function in the second stat_smooth(), set it to "All". This will name the line properly.
+
 Remove the col attribute in the second stat_smooth(). Otherwise, it will overwrite the col aesthetic.
+
 Plot 4: Now we should see our "All" model in the legend, but it's not black anymore.
 
 Add a scale layer: scale_color_manual() with the first argument set to "Cylinders" and values set to the predefined myColors variable.
@@ -126,6 +169,7 @@ ggplot(mtcars, aes(x = wt, y = mpg, col = factor(cyl))) +
               se = FALSE, span = 0.7)
 
 # Plot 4: Add scale_color_manual to change the colors
+library("RColorBrewer")
 myColors <- c(brewer.pal(3, "Dark2"), "black")
 ggplot(mtcars, aes(x = wt, y = mpg, col = factor(cyl))) +
   geom_point() +
@@ -137,31 +181,11 @@ ggplot(mtcars, aes(x = wt, y = mpg, col = factor(cyl))) +
   scale_color_manual("Cylinders", values = myColors)
 ```
 
-# Modifying stat_smooth (2)
-In this exercise we'll take a look at a more subtle example of defining and using linear models. ggplot2 and the Vocab data frame are already loaded for you.
-
-Instruction:
-
-Plot 1: This code produces a jittered plot of vocabulary against education, variables from the Vocab data frame.
-
-Add a stat_smooth() layer with method set to "lm". Hide the CI ribbons by using se = FALSE.
-Plot 2: Color by year.
-
-Specify the col = year aesthetic to the nested ggplot(aes()) function.
-To see why this works, try using only col = year, and adding points.
-Plot 3: Linear model for each year.
-
-We need to specify year as a factor variable if we want to use it as a grouping variable for our linear models. Add the col = factor(year) aesthetic to the nested ggplot(aes()) function.
-Plot 4: Years are ordered, so use a sequential color palette.
-
-Add scale_color_brewer().
-Don't add any arguments here. This results in a warning message, since the default palette, "Blues", only has 9 colors. Since we have 16 years, this is not a complete solution!
-Plot 5: To get the proper colors, we can use col = year, because the variable year is type integer and we want a continuous scale. However, we'll need to specify the invisible group aesthetic so that our linear models are still calculated appropriately. The scale layer, scale_color_gradientn(), has been provided for you - this allows us to map a continuous variable onto a colour scale.
-
-Add group = factor(year) inside aes().
-Inside stat_smooth(), set alpha = 0.6 and size = 2.
 
 ```{r}
+library(carData)
+str(Vocab)
+
 # Plot 1: Jittered scatter plot, add a linear model (lm) smooth
 ggplot(Vocab, aes(x = education, y = vocabulary)) +
   geom_jitter(alpha = 0.2) +
@@ -186,24 +210,9 @@ ggplot(Vocab, aes(x = education, y = vocabulary, col = year, group = factor(year
   scale_color_gradientn(colors = brewer.pal(9, "YlOrRd"))
 ```
 
-# Quantiles
-The previous example used the Vocab dataset and applied linear models describing vocabulary by education for different years. Here we'll continue with that example by using stat_quantile() to apply a quantile regression (method rq).
+Use stat_quantile() to apply a quantile regression (method rq). By default, the 1st, 2nd (i.e. median), and 3rd quartiles are modeled as a response to the predictor variable.Specific quantiles can be specified with the quantiles argument.
 
-By default, the 1st, 2nd (i.e. median), and 3rd quartiles are modeled as a response to the predictor variable, in this case education. Specific quantiles can be specified with the quantiles argument.
-
-If you want to specify many quantile and color according to year, then things get too busy. We'll explore ways of dealing with this in the next chapter.
-
-Instructions
-
-The code from the previous exercise, with the linear model and a suitable color palette, is already shown.
-
-1. Update the plotting code.
-Change the stat function from stat_smooth() to stat_quantile().
-Get rid of all the arguments except alpha and size.
-
-2. The resulting plot will be a mess, because there are three quartiles drawn by default.
-Copy the code for the previous instruction.
-Set the quantiles argument to 0.5 so that only the median is shown.
+The first plot may be a mess, because there are three quartiles drawn by default.
 
 ```{r}
 # Use stat_quantile instead of stat_smooth
@@ -217,14 +226,10 @@ ggplot(Vocab, aes(x = education, y = vocabulary, col = year, group = factor(year
   scale_color_gradientn(colors = brewer.pal(9,"YlOrRd"))
 ```
 
-# Sum
+
 Another useful stat function is stat_sum(). This function calculates the total number of overlapping observations and is another good alternative to overplotting.
 
-Instructions
-
-ggplot2 is already loaded. A plot showing jittered points is already provided and stored as p.
-
-1. Add stat_sum() to this plotting object p. This maps the overall count of each dot onto size. You don't have to set any arguments; the aesthetics will be inherited from the base plot!
+1. Add stat_sum() to this plotting object p. This maps the overall count of each dot onto size. 
 
 2. Add the size scale with the generic scale_size() function. Use range to set the minimum and maximum dot sizes as c(1,10).
 
@@ -232,6 +237,7 @@ ggplot2 is already loaded. A plot showing jittered points is already provided an
 # Plot 1: Jittering only
 p <- ggplot(Vocab, aes(x = education, y = vocabulary)) +
   geom_jitter(alpha = 0.2)
+p
 
 # Plot 2: Add stat_sum
 p +
@@ -244,26 +250,104 @@ p +
 
 ```
 
-# Preparations
-Here we'll look at stat_summary() in action. We'll build up various plots one-by-one.
+## Stats outside Geoms
 
-In this exercise we'll consider the preparations. That means we'll make sure the data is in the right format and that all the positions that we might use in our plots are defined. Lastly, we'll set the base layer for our plot. ggplot2 is already loaded, so you can get started straight away!
+1. calculating statistics
 
-Instructions
+```{r}
+set.seed(123) 
+xx <- rnorm(100)
+mean(xx) + (sd(xx)* c(-1, 1))
 
-1. Explore the structure of the mtcars dataset by executing str(mtcars).
+# Hmisc
+# install.packages("Hmisc")
+library(Hmisc) 
+smean.sdl(xx, mult = 1)
 
-2. In mtcars, cyl and am are classified as continuous, but they are actually categorical. Previously we just used factor(), but here we'll modify the actual dataset. Change cyl and am to be categorical in the mtcars data frame using as.factor.
+# ggplot2
+mean_sdl(xx, mult = 1)
+```
 
-3. Next we'll set three position objects with convenient names. This allows us to use the exact positions on multiple layers. Create:
+2. stat_summary() of mean and sd
 
-4. posn.d, using position_dodge() with a width of 0.1,
+```{r}
+# uses geom_pointrange() by default
+ggplot(iris, aes(x = Species, y = Sepal.Length)) +
+  stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1))
 
-5. posn.jd, using position_jitterdodge() with a jitter.width of 0.1 and a dodge.width of 0.2
+ggplot(iris, aes(x = Species, y = Sepal.Length)) +
+  stat_summary(fun.y = mean, geom = "point") +
+  stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1),
+  geom = "errorbar", width = 0.1)
 
-6. posn.j, using position_jitter() with a width of 0.2.
+# NOT RECOMMENDED
+ggplot(iris, aes(x = Species, y = Sepal.Length)) +
+  stat_summary(fun.y = mean, geom = "bar", fill = "skyblue") +
+  stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1),
+  geom = "errorbar", width = 0.1)
 
-7. Finally, we'll make our base layers and store it in the object wt.cyl.am. Make the base call for ggplot mapping cyl to the x, wt to y, am to both col and fill. Also set group = am inside aes(). The reason for these redundancies will become clear later on.
+```
+
+3. 95% Confidence Interval
+
+```{r}
+ERR <- qt(0.975, length(xx) - 1) * (sd(xx) / sqrt(length(xx)))
+mean(xx) + (ERR* c(-1, 1))
+
+# Hmisc
+smean.cl.normal(xx) 
+
+# ggplot2
+mean_cl_normal(xx) 
+            
+```
+
+4. stat_summary() of CI
+
+```{r}
+# use any function, as long as output has expected format
+ggplot(iris, aes(x = Species, y = Sepal.Length)) +
+  stat_summary(fun.data = mean_cl_normal, width = 0.1)
+```
+
+5. Other stat_summary functions
+
+* stat_summary(): Summarise y values at distinct x values
+
+* stat_function(): Compute y values from a function of x values
+
+* stat_qq(): Perform calculations for a quantile-quantile plot
+
+6. Normal distribution
+
+```{r}
+# Normal distribution
+library(MASS) 
+mam.new <- data.frame(body = log10(mammals$body)) 
+ggplot(mam.new, aes(x = body)) +
+  geom_histogram(aes( y = ..density..)) +
+  geom_rug() +
+  stat_function(fun = dnorm, colour = "red", arg = list(mean = mean(mam.new$body), sd = sd(mam.new$body)))
+
+# QQ plot
+mam.new$slope <- diff(quantile(mam.new$body, c(0.25, 0.75))) / diff(qnorm(c(0.25, 0.75)))
+mam.new$int <- quantile(mam.new$body, 0.25) - mam.new$slope * qnorm(0.25) 
+ggplot(mam.new, aes(sample = body)) +
+  stat_qq() +
+  geom_abline(aes(slope = slope, intercept = int), col = "red")
+
+```
+
+
+### Practice
+
+We'll set three position objects with convenient names. This allows us to use the exact positions on multiple layers. Create:
+
+1. posn.d, using position_dodge() with a width of 0.1,
+
+2. posn.jd, using position_jitterdodge() with a jitter.width of 0.1 and a dodge.width of 0.2
+
+3. posn.j, using position_jitter() with a width of 0.2.
 
 ```{r}
 # Display structure of mtcars
@@ -282,27 +366,7 @@ posn.j <- position_jitter(width = 0.2)
 wt.cyl.am <- ggplot(mtcars, aes(x = cyl, y = wt,col = am, fill = am, group = am))
 ```
 
-# Plotting variations
-Now that the preparation work is done, let's have a look at at stat_summary().
 
-ggplot2 is already loaded, as is wt.cyl.am, which is defined as
-
-```{r}
-wt.cyl.am <- ggplot(mtcars, aes(x = cyl,  y = wt, col = am, fill = am, group = am))
-
-```
-Also all the position objects of the previous exercise, posn.d, posn.jd and posn.j, are available. For starters, Plot 1 is already coded for you.
-
-Instructions
-
-1. Plot 2: Add a stat_summary() layer to wt.cyl.am and calculate the mean and standard deviation as we did in the video: set fun.data to mean_sdl and specify fun.args to be list(mult = 1). Set the position argument to posn.d.
-
-2. Plot 3: Repeat the previous plot, but use the 95% confidence interval instead of the standard deviation. You can use mean_cl_normal instead of mean_sdl this time. There's no need to specify fun.args in this case. Again, set position to posn.d.
-
-3. The above plots were simple because they implicitly used a default geom, which is geom_pointrange(). For Plot 4, fill in the blanks to calculate the mean and standard deviation separately with two stat_summary() functions:
-
-4. For the mean, use geom = "point" and set fun.y = mean. This time you should use fun.y because the point geom uses the y aesthetic behind the scenes.
-Add error bars with another stat_summary() function. Set geom = "errorbar" to get the real "T" tips. Set fun.data = mean_sdl.
 
 ```{r}
 # wt.cyl.am, posn.d, posn.jd and posn.j are available
@@ -327,42 +391,11 @@ wt.cyl.am +
                position = posn.d, fun.args = list(mult = 1), width = 0.1)
 ```
 
-# Custom Functions
-In the video we saw that the only difference between ggplot2::mean_sdl() and Hmisc::smean.sdl() is the naming convention. In order to use the results of a function directly in ggplot2 we need to ensure that the names of the variables match the aesthetics needed for our respective geoms.
-
-Here we'll create two new functions in order to create the plot shown in the viewer. One function will measure the full range of the dataset and the other will measure the interquartile range.
-
-A play vector, xx, has been created for you. Execute
-
-```{r}
-mean_sdl(xx, mult = 1)
-
-```
-in the R Console and consider the format of the output. You'll have to produce functions which return similar outputs.
-
-Instructions
-
-1. First, change the arguments ymin and ymax inside the data.frame() call of gg_range().
-
-2. ymin should be the minimum of x
-
-3. ymax should be the maximum of x
-
-Use min() and max(). Watch out, naming is important here. gg_range(xx) should now generate the required output.
-
-4. Next, change the arguments y, ymin and ymax inside the data.frame() call of med_IQR().
-
-5. y should be the median of x
-
-6. ymin should be the first quartile
-
-7. ymax should be the 3rd quartile.
-
-You should use median() and quantile(). For example, quantile() can be used as follows to give the first quartile: quantile(x)[2]. med_IQR(xx) should now generate the required output.
 
 
 ```{r}
 # Play vector xx is available
+mean_sdl(xx, mult = 1)
 
 # Function to save range for use in ggplot
 gg_range <- function(x) {
@@ -372,9 +405,6 @@ gg_range <- function(x) {
 }
 
 gg_range(xx)
-# Required output
-#   ymin ymax
-# 1    1  100
 
 # Function to Custom function
 med_IQR <- function(x) {
@@ -385,21 +415,10 @@ med_IQR <- function(x) {
 }
 
 med_IQR(xx)
-# Required output
-#        y  ymin  ymax
-# 25% 50.5 25.75 75.25
 ```
 
-# Custom Functions (2)
-In the last exercise we created functions that will allow us to plot the so-called five-number summary (the minimum, 1st quartile, median, 3rd quartile, and the maximum). Here, we'll implement that into a unique plot type.
+When using stat_summary() recall that the fun.data argument requires a properly labelled 3-element long vector. The fun.y argument requires only a 1-element long vector.
 
-All the functions and objects from the previous exercise are available including the updated mtcars data frame, the position object posn.d, the base layers wt.cyl.am and the functions med_IQR() and gg_range().
-
-The plot you'll end up with at the end of this exercise is shown on the right. When using stat_summary() recall that the fun.data argument requires a properly labelled 3-element long vector, which we saw in the previous exercises. The fun.y argument requires only a 1-element long vector.
-
-Instructions
-
-Complete the given stat_summary() functions, don't change the predefined arguments:
 
 1. The first stat_summary() layer should have geom set to "linerange". fun.data argument should be set to med_IQR, the function you used in the previous exercise.
 
