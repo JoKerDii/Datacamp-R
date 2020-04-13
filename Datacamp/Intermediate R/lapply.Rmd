@@ -1,20 +1,50 @@
 ---
 title: "Datacamp_Intermediate_R__lapply"
 author: "dizhen"
-date: "2019Äê4ÔÂ1ÈÕ"
-output: html_document
+date: "2019/4/1"
+output:
+  pdf_document: default
+  html_document: default
 ---
-# Use lapply with a built-in R function
 
-Before you go about solving the exercises below, have a look at the documentation of the lapply() function. The Usage section shows the following expression:
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## lapply
+
+1. Apply function over list or vector
+
+2. Function can return R objects of different classes
+
+3. List necessary to store heterogeneous content
+
+4. However, o"en homogeneous content
+
+
+```{r}
+nyc <- list(pop = 8405837,
+  boroughs = c("Manhattan", "Bronx", "Brooklyn","Queens", "Staten Island"),
+  capital = FALSE)
+lapply(nyc, class)
+
+cities <- c("New York", "Paris", "London", "Tokyo", "Rio de Janeiro", "Cape Town")
+lapply(cities, nchar) # lapply always gives a list
+unlist(lapply(cities, nchar)) # change the list to a vector
+
+oil_prices <- list(2.37, 2.49, 2.18, 2.22, 2.47, 2.32)
+multiply <- function(x, factor) {
+  x * factor
+}
+times3 <- lapply(oil_prices, multiply, factor = 3) 
+unlist(times3) 
+```
+
+### Practice
+
+Use lapply with a built-in R function
 
 lapply(X, FUN, ...)
-
-To put it generally, lapply takes a vector or list X, and applies the function FUN to each of its members. If FUN requires additional arguments, you pass them after you've specified X and FUN (...). The output of lapply() is a list, the same length as X, where each element is the result of applying FUN on the corresponding element of X.
-
-Now that you are truly brushing up on your data science skills, let's revisit some of the most relevant figures in data science history. We've compiled a vector of famous mathematicians/statisticians and the year they were born. Up to you to extract some information!
-
-Instruction:
 
 1. Have a look at the strsplit() calls, that splits the strings in pioneers on the : sign. The result, split_math is a list of 4 character vectors: the first vector element represents the name, the second element the birth year.
 
@@ -36,15 +66,8 @@ split_low = lapply(split_math,tolower)
 str(split_low)
 
 ```
-# Use lapply with your own function
 
-As Filip explained in the instructional video, you can use lapply() on your own functions as well. You just need to code a new function and make sure it is available in the workspace. After that, you can use the function inside lapply() just as you did with base R functions.
-
-In the previous exercise you already used lapply() once to convert the information about your favorite pioneering statisticians to a list of vectors composed of two character strings. Let's write some code to select the names and the birth years separately.
-
-The sample code already includes code that defined select_first(), that takes a vector as input and returns the first element of this vector.
-
-Instructions:
+Use lapply with your own function
 
 1. Apply select_first() over the elements of split_low with lapply() and assign the result to a new variable names.
 
@@ -74,11 +97,12 @@ select_second <- function(x){
 # Apply select_second() over split_low: years
 years <- lapply(split_low,select_second)
 ```
-# lapply and anonymous functions
 
-Writing your own functions and then using them inside lapply() is quite an accomplishment! But defining functions to use them only once is kind of overkill, isn't it? That's why you can use so-called anonymous functions in R.
 
-Previously, you learned that functions in R are objects in their own right. This means that they aren't automatically bound to a name. When you create a function, you can use the assignment operator to give the function a name. It's perfectly possible, however, to not give the function a name. This is called an anonymous function:
+lapply and anonymous functions
+
+You can use so-called anonymous functions in R.This means that they aren't automatically bound to a name. When you create a function, you can use the assignment operator to give the function a name. It's perfectly possible, however, to not give the function a name. This is called an anonymous function:
+
 
 ```{r}
 # Named function
@@ -90,9 +114,7 @@ function(x) { 3 * x }
 # Use anonymous function inside lapply()
 lapply(list(1,2,3), function(x) { 3 * x })
 ```
-split_low is defined for you.
 
-Instructions:
 
 1. Transform the first call of lapply() such that it uses an anonymous function that does the same thing.
 
@@ -110,18 +132,17 @@ names <- lapply(split_low, function(x){x[1]})
 # Transform: use anonymous function inside lapply
 years <- lapply(split_low, function(x){x[2]})
 ```
-# Use lapply with additional arguments
+Use lapply with additional arguments
 
-In the video, the triple() function was transformed to the multiply() function to allow for a more generic approach. lapply() provides a way to handle functions that require more than one argument, such as the multiply() function:
+lapply() provides a way to handle functions that require more than one argument, such as the multiply() function:
+
 ```{r}
 multiply <- function(x, factor) {
   x * factor
 }
 lapply(list(1,2,3), multiply, factor = 3)
 ```
-On the right we've included a generic version of the select functions that you've coded earlier: select_el(). It takes a vector as its first argument, and an index as its second argument. It returns the vector's element at the specified index.
 
-Instructions:
 1. Use lapply() twice to call select_el() over all elements in split_low: once with the index equal to 1 and a second time with the index equal to 2. Assign the result to names and years, respectively.
 
 ```{r}
@@ -139,7 +160,8 @@ select_el <- function(x, index) {
 names <- lapply(split_low,select_el,index = 1)
 years <- lapply(split_low,select_el,index = 2)
 ```
-# Apply functions that return NULL
+
+Apply functions that return NULL
 
 In all of the previous exercises, it was assumed that the functions that were applied over vectors and lists actually returned a meaningful result. For example, the tolower() function simply returns the strings with the characters in lowercase. This won't always be the case. Suppose you want to display the structure of every element of a list. You could use the str() function for this, which returns NULL:
 
