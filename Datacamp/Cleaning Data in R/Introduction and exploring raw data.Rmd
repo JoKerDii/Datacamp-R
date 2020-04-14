@@ -1,18 +1,23 @@
 ---
 title: "Datacamp_Cleaning Data in R_Introduction and exploring raw data"
 author: "dizhen"
-date: "2019Äê4ÔÂ4ÈÕ"
-output: html_document
+date: "2019/4/4"
+output:
+  pdf_document: default
+  html_document: default
 ---
-# Here's what messy data look like
 
-In the final chapter of this course, you will be presented with a messy, real-world dataset containing an entire year's worth of weather data from Boston, USA. Among other things, you'll be presented with variables that contain column names, column names that should be values, numbers coded as character strings, and values that are missing, extreme, and downright erroneous!
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
-Instructions:
+## Introduction to cleaning data in R
 
-1. We've placed some R code in the script to the right. Run the code as-is to see just how messy the weather data really are!
 
 ```{r}
+
+weather <- readRDS("data/weather.rds")
+
 # View the first 6 rows of data
 head(weather)
 
@@ -24,42 +29,44 @@ str(weather)
 ```
 
 
-# Here's what clean data look like
 
-In this course, you will acquire many new tools in your data cleaning toolbox for whipping the weather data into shape!
+## Exploring raw data
 
-Instructions:
+1. Understanding the structure of your data
 
-1. Run the code provided to see what the weather dataset will look like by the time you are done cleaning it. If it's not immediately clear what's changed, don't worry! You will have a much deeper understanding by the end of this course.
+class() - Class of data object
+
+dim() - Dimensions of data
+
+names() - Column names
+
+str() - Preview of data with helpful details
+
+glimpse() - Be!er version of str() from dplyr
+
+summary() - Summary of data
+
+2. Looking at your data
+
+head() - View top of dataset
+
+tail() - View bo!om of dataset
+
+print() - View entire dataset (not recommended!)
+
+3. Visualizing your data
+
+hist() - View histogram of a single variable
+
+plot() - View plot of two variables
+
+
+### Practice
 
 ```{r}
-# View the first 6 rows of data
-head(weather_clean)
+library(readr)
+bmi <- read_csv("data/bmi_clean.csv")
 
-# View the last 6 rows of data
-tail(weather_clean)
-
-# View a condensed summary of the data
-str(weather_clean)
-```
-
-# Getting a feel for your data
-
-The first thing to do when you get your hands on a new dataset is to understand its structure. There are several ways to go about this in R, each of which may reveal different issues with your data that require attention.
-
-In this course, we are only concerned with data that can be expressed in table format (i.e. two dimensions, rows and columns). As you may recall from earlier courses, tables in R often have the type data.frame. You can check the class of any object in R with the class() function.
-
-Once you know that you are dealing with tabular data, you may also want to get a quick feel for the contents of your data. Before printing the entire dataset to the console, it's probably worth knowing how many rows and columns there are. The dim() command tells you this.
-
-Instructions:
-
-1. We've loaded a dataset called bmi into your workspace. The data, which give the (age standardized) mean body mass index (BMI) among males in each country for the years 1980-2008, come from the School of Public Health, Imperial College London.
-
-Check the class of bmi.
-Find the dimensions of bmi.
-Print the bmi column names.
-
-```{r}
 # Check the class of bmi
 class(bmi)
 
@@ -70,23 +77,6 @@ dim(bmi)
 names(bmi)
 ```
 
-# Viewing the structure of your data
-
-Since bmi doesn't have a huge number of columns, you can view a quick snapshot of your data using the str() (for structure) command. In addition to the class and dimensions of your entire dataset, str() will tell you the class of each variable and give you a preview of its contents.
-
-Although we won't go into detail on the dplyr package in this lesson (see the Data Manipulation in R with dplyr course), the glimpse() function from dplyr is a slightly cleaner alternative to str(). str() and glimpse() give you a preview of your data, which may reveal issues with the way columns are labelled, how variables are encoded, etc.
-
-You can use the summary() command to get a better feel for how your data are distributed, which may reveal unusual or extreme values, unexpected missing data, etc. For numeric variables, this means looking at means, quartiles (including the median), and extreme values. For character or factor variables, you may be curious about the number of times each value appears in the data (i.e. counts), which summary() also reveals.
-
-Instructions:
-
-1. View the structure of bmi using the traditional method.
-
-2. Load the dplyr package.
-
-3. View the structure of bmi using dplyr.
-
-4. Look at a summary() of bmi.
 
 ```{r}
 # Check the structure of bmi
@@ -101,25 +91,7 @@ glimpse(bmi)
 # View a summary of bmi
 summary(bmi)
 ```
-# Looking at your data
 
-You can look at all the summaries you want, but at the end of the day, there is no substitute for looking at your data -- either in raw table form or by plotting it.
-
-The most basic way to look at your data in R is by printing it to the console. As you may know from experience, the print() command is not even necessary; you can just type the name of the object. The downside to this option is that R will attempt to print the entire dataset, which can be a nuisance if the dataset is too large.
-
-One way around this is to use the head() and tail() commands, which only display the first and last 6 rows of data, respectively. You can view more (or fewer) rows by providing as a second argument to the function the number of rows you wish to view. These functions provide a useful method for quickly getting a sense of your data without overly cluttering the console.
-
-Instructions:
-
-1. Print the full dataset to the console (you don't need print() to do this).
-
-2. View the first 6 rows of bmi.
-
-3. View the first 15 rows of bmi.
-
-4. View the last 6 rows of bmi.
-
-5. View the last 10 rows of bmi.
 
 ```{r}
 # Print bmi to the console
@@ -138,21 +110,6 @@ tail(bmi,n = 6)
 tail(bmi, n=10)
 ```
 
-# Visualizing your data
-
-There are many ways to visualize data. Since this is not a course about data visualization, we will only touch on two types of plots that may be useful for quickly identifying extreme or suspicious values in your data: histograms and scatter plots.
-
-A histogram, created with the hist() function, takes a vector (i.e. column) of data, breaks it up into intervals, then plots as a vertical bar the number of instances within each interval. A scatter plot, created with the plot() function, takes two vectors (i.e. columns) of data and plots them as a series of (x, y) coordinates on a two-dimensional plane.
-
-Let's look at a quick example of each.
-
-Instructions:
-
-1. For the bmi dataset:
-
-Use hist() to look at the distribution of average BMI across all countries in 2008.
-
-Use plot() to see how each country's average BMI in 1980 (x-axis) compared with its BMI in 2008 (y-axis).
 
 ```{r}
 # Histogram of BMIs from 2008
