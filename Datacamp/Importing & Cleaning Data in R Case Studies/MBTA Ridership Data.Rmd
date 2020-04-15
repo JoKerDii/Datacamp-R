@@ -1,45 +1,30 @@
 ---
 title: 'Datacamp_Importing & Cleaning Data in R: Case Studies__MBTA Ridership Data'
 author: "dizhen"
-date: "2019Äê4ÔÂ5ÈÕ"
-output: html_document
+date: "2019/4/5"
+output:
+  pdf_document: default
+  html_document: default
 ---
-# Using readxl
-The Massachusetts Bay Transportation Authority ("MBTA" or just "the T" for short) manages America's oldest subway, as well as Greater Boston's commuter rail, ferry, and bus systems.
 
-It's your first day on the job as the T's data analyst and you've been tasked with analyzing average ridership through time. You're in luck, because this chapter of the course will guide you through cleaning a set of MBTA ridership data!
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
-The dataset is stored as an Excel spreadsheet called mbta.xlsx in your working directory. You'll use the read_excel() function from Hadley Wickham's readxl package to import it.
 
-The first time you import a dataset, you might not know how many rows need to be skipped. In this case, the first row is a title (see this Excel screenshot), so you'll need to skip the first row. You can also download the whole Excel spreadsheet here.
+Using readxl
 
-Instructions:
-
-1. Load the readxl package.
-2. Import the ridership data using read_excel(). Set the skip argument to 1 and store the result to mbta.
 
 ```{r}
 # Load readxl
 library(readxl)
 
 # Import mbta.xlsx and skip first row: mbta
-mbta<-read_excel("mbta.xlsx",skip = 1)
+mbta<-read_excel("data/mbta.xlsx",skip = 1)
 ```
 
-# Examining the data
-Your new boss at the T has tasked you with analyzing the ridership data. Of course, you're going to clean the dataset first. The first step when cleaning a dataset is to explore it a bit.
+Examining the data
 
-The mbta data frame is already loaded in your workspace. Pay particular attention to how the rows and columns are organized and to the locations of missing values.
-
-If you want to see what the dataset looks like in Excel, you can take another look at the Excel screenshot.
-
-mbta is pre-loaded in your workspace.
-
-Instructions:
-
-1. View the structure of mbta.
-2. View the first 6 rows of mbta.
-3. View a summary of mbta.
 
 ```{r}
 # View the structure of mbta
@@ -52,21 +37,8 @@ head(mbta, n=6)
 summary(mbta)
 ```
 
-# Removing unnecessary rows and columns
-It appears that the data are organized with observations stored as columns rather than as rows. You can fix that.
+Removing unnecessary rows and columns
 
-First, though, you can address the missing data. All of the NA values are stored in the All Modes by Qtr row. This row really belongs in a different data frame; it is a quarterly average of weekday MBTA ridership. Since this dataset tracks monthly average ridership, you'll remove that row.
-
-Similarly, the 7th row (Pct Chg / Yr) and the 11th row (TOTAL) are not really observations as much as they are analysis. Go ahead and remove the 7th and 11th rows as well.
-
-The first column also needs to be removed because it's just listing the row numbers.
-
-In case you were wondering, this dataset is stored as a tibble which is just a specific type of data frame. For more information, see here.
-
-Instructions:
-
-1. Remove the first, seventh, and eleventh rows of mbta (All Modes By Qtr, Pct Chg / Yr, and TOTAL). Name the resulting data frame mbta2.
-2. Remove the first column of mbta2. Name the resulting data frame mbta3.
 
 ```{r}
 # Remove rows 1, 7, and 11 of mbta: mbta2
@@ -76,22 +48,9 @@ mbta2 <- mbta[-c(1,7,11),]
 mbta3 <- mbta2[,-1]
 ```
 
-# Observations are stored in columns
-Recall from a few exercises back that in your T ridership data, variables are stored in rows instead of columns. If you forget what that looked like, go ahead and enter head(mbta3) in the console and/or look at the screenshot.
+Observations are stored in columns
 
-The different modes of transportation (commuter rail, bus, subway, ferry, ...) are variables, providing information about each month's average ridership. The months themselves are observations. You can tell which is which because as you go through time, the month changes, but the modes of transport offered by the T do not.
 
-As is customary, you want to represent variables in columns rather than rows. The first step is to use the gather() function from the tidyr package, which will gather columns into key-value pairs.
-
-mbta3 is pre-loaded in your workspace.
-
-Instructions:
-
-1. Load the tidyr package.
-
-2. Gather the columns of mbta3. Use the - operator to omit the mode column. Call your new columns month and thou_riders (for "thousand riders") and assign the result to mbta4.
-
-3. View the head of mbta4.
 
 ```{r}
 # Load tidyr
@@ -104,29 +63,15 @@ mbta4 <- gather(mbta3, month,thou_riders,-mode)
 head(mbta4)
 ```
 
-# Type conversions
-In a minute, you'll put variables where they belong (as column names). But first, take this opportunity to change the average weekday ridership column, thou_riders, into numeric values rather than character strings. That way, you'll be able to do things like compare values and do math.
+Type conversions
 
-mbta4 is pre-loaded in your workspace.
-
-Instructions:
-
-1. Coerce the ridership column, mbta4$thou_riders, into a numeric. You can just assign the result back to the same column in mbta4.
 
 ```{r}
 # Coerce thou_riders to numeric
 mbta4$thou_riders <- as.numeric(mbta4$thou_riders)
 ```
 
-# Variables are stored in both rows and columns
-Now, you can finish the job you started earlier: getting variables into columns. Right now, variables are stored as "keys" in the mode column. You'll use the tidyr function spread() to make them into columns containing average weekday ridership for the given month and mode of transport.
-
-tidyr is pre-loaded in your workspace.
-
-Instructions:
-
-1. Use spread() to change values in the mode column of mbta4 into column names. The columns should contain the average weekday ridership values associated with that mode of transport. Call the resulting data frame mbta5.
-2. View the head of mbta5.
+Variables are stored in both rows and columns
 
 ```{r}
 # Spread the contents of mbta4: mbta5
@@ -136,20 +81,10 @@ mbta5 <- spread(mbta4, mode,thou_riders)
 head(mbta5)
 ```
 
-# Separating columns
-Your dataset is already looking much better! Your boss saw what a great job you're doing and now wants you to do an analysis of the T's ridership during certain months across all years.
+Separating columns
 
-Your dataset has month names in it, so that analysis will be a piece of cake. There's only one small problem: if you want to look at ridership on the T during every January (for example), the month and year are together in the same column, which makes it a little tricky.
 
-In this exercise, you'll separate the month column into distinct month and year columns to make life easier.
 
-tidyr and mbta5 are pre-loaded in your workspace.
-
-Instructions:
-
-1. Look at head(mbta5) to remind yourself what the month column currently looks like.
-2. Split the month column of mbta5 at the dash: create a new month column with only the month and a year column with only the year. Assign the resulting data frame to mbta6.
-3. View the head of mbta6.
 ```{r}
 # View the head of mbta5
 head(mbta5)
@@ -162,17 +97,8 @@ head(mbta6)
 ```
 
 
-# Do your values seem reasonable?
-Before you write up the analysis for your boss, it's a good idea to screen the data for any obvious mistakes and/or outliers.
+Do your values seem reasonable?
 
-There are many valid techniques for doing this; you'll practice a couple of them here.
-
-mbta6 is pre-loaded in your workspace.
-
-Instructions
-
-1. View a summary() of mbta6. Pay particular attention to the Boat column stats.
-2. Generate a histogram of the Commuter Boat ridership by calling hist() on the column mbta6$Boat.
 
 ```{r}
 # View a summary of mbta6
@@ -182,24 +108,7 @@ summary(mbta6)
 hist(mbta6$Boat)
 ```
 
-# Dealing with entry error
-Think for a minute about that Boat histogram. Every month, average weekday commuter boat ridership was on either side of four thousand. Then, one month it jumped to 40 thousand without warning?
-
-Unless the Olympics were happening in Boston that month (they weren't), this value is certainly an error. You can assume that whoever was entering the data that month accidentally typed 40 instead of 4.
-
-Because it's an error, you don't want this value influencing your analysis. In this exercise, you'll locate the incorrect value and change it to 4.
-
-After you make the change, you'll run the last two commands in the editor as-is. They use functions you may not know yet to produce some cool ridership plots: one showing the lesser-used modes of transport (take a look at the gorgeous seasonal variation in Boat ridership), and one showing all modes of transport. The plots are based on the long version of the data we produced in Exercise 4 -- a good example of using different data formats for different purposes.
-
-If you'd like to learn how to do this on your own, check out DataCamp's Data Visualization with ggplot2 courses!
-
-Instructions
-
-1. Create a numeric variable i to store the index of the incorrect Boat value in mbta6. Combine a call to which() with a comparison operator (i.e. >) to determine the row number.
-2. Overwrite the incorrect value of mbta6$Boat with a 4.
-3. Verify that the change was made by looking at another histogram of mbta6$Boat.
-4. Run the last two commands as-is to generate pretty plots.
-
+Dealing with entry error
 ```{r}
 # Find the row number of the incorrect value: i
 i <- which(mbta6$Boat > 15)
@@ -210,14 +119,14 @@ mbta6$Boat[i] <- 4
 # Generate a histogram of Boat column
 hist(mbta6$Boat)
 
-# Look at Boat and Trackless Trolley ridership over time (don't change)
-ggplot(mbta_boat, aes(x = month, y = thou_riders, col = mode)) +  geom_point() + 
-  scale_x_discrete(name = "Month", breaks = c(200701, 200801, 200901, 201001, 201101)) + 
-  scale_y_continuous(name = "Avg Weekday Ridership (thousands)")
-
-# Look at all T ridership over time (don't change)
-ggplot(mbta_all, aes(x = month, y = thou_riders, col = mode)) + geom_point() + 
-  scale_x_discrete(name = "Month", breaks = c(200701, 200801, 200901, 201001, 201101)) +  
-  scale_y_continuous(name = "Avg Weekday Ridership (thousands)")
+# # Look at Boat and Trackless Trolley ridership over time (don't change)
+# ggplot(mbta_boat, aes(x = month, y = thou_riders, col = mode)) +  geom_point() + 
+#   scale_x_discrete(name = "Month", breaks = c(200701, 200801, 200901, 201001, 201101)) + 
+#   scale_y_continuous(name = "Avg Weekday Ridership (thousands)")
+# 
+# # Look at all T ridership over time (don't change)
+# ggplot(mbta_all, aes(x = month, y = thou_riders, col = mode)) + geom_point() + 
+#   scale_x_discrete(name = "Month", breaks = c(200701, 200801, 200901, 201001, 201101)) +  
+#   scale_y_continuous(name = "Avg Weekday Ridership (thousands)")
 ```
 
