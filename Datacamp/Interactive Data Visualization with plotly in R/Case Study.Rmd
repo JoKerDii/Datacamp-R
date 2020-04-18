@@ -1,0 +1,319 @@
+---
+title: "Interactive Data Visualization with plotly in R_Case Study"
+author: "dizhen"
+date: "2020/4/18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(plotly)
+library(forcats)
+
+turnout <- read_csv("data/election_data/TurnoutRates.csv")
+fundraising <- read_csv("data/election_data/fec_candidate_summary_2018.csv")
+senate_winners <- read_csv("data/election_data/senate_winners.csv")
+fl_boundaries <- read_csv("data/election_data/fl_boundaries.csv")
+fl_results <- read_csv("data/election_data/fl_results.csv")
+```
+
+## Introduction to the 2018 election data
+
+```{r}
+# Create a scatterplot of turnout2018 against turnout2014
+p <- turnout %>%
+  plot_ly(x = ~turnout2014, y=~turnout2018) %>%
+  add_markers() %>%
+  layout(xaxis = list(title = "2014 voter turnout"),
+         yaxis = list(title = "2018 voter turnout"))
+         
+p
+```
+You can add a line by connecting two points using add_lines(x = c(x1, x2), y = (y1, y2))
+
+```{r}
+# Add the line y = x to the scatterplot
+p %>%
+  add_lines(x = c(0.25, 0.6), y = c(0.25, 0.6)) %>%
+  layout(showlegend = FALSE)
+```
+In the sample code, turnout %>% top_n(15, wt = turnout) extracts the 15 states with the highest turnout rates.
+
+```{r}
+
+# Create a dotplot of voter turnout in 2018 by state ordered by turnout
+turnout %>%
+  top_n(15, wt = turnout2018) %>%
+  plot_ly(x = ~turnout2018, y = ~fct_reorder(state, turnout2018)) %>%
+  add_markers() %>%
+  layout(xaxis = list(title = "Eligible voter turnout"), 
+         yaxis = list(title = "State", type= "category"))
+```
+
+```{r}
+# Create a histogram of receipts for the senate races
+fundraising %>%
+  filter(office == "S") %>%
+  plot_ly(x = ~receipts) %>%
+  add_histogram() %>%
+  layout(title = "Fundraising for 2018 Senate races",
+         xaxis = list(title = "Total contributions received"))
+```
+
+```{r}
+# Create a dotplot of the top 15 Senate campaigns
+fundraising %>%
+  filter(office == "S") %>%
+  top_n(15, wt = receipts) %>%
+  plot_ly(x = ~receipts, y = ~fct_reorder(state, receipts),
+          color = ~fct_drop(party),
+          hoverinfo = "text",
+          text = ~paste("Candidate:", name, "<br>",
+                        "Party:", party, "<br>",
+                        "Receipts:", receipts, "<br>",
+                        "Disbursements:", disbursement)) %>%
+  add_markers(colors = c("blue", "red")) 
+```
+
+
+## Choropleth maps
+
+1. Choropleth maps in plotly
+
+
+```{r eval=FALSE}
+turnout %>%
+  plot_geo(locationmode = 'USA-states') %>%
+  add_trace(
+    z = ~turnout, # Sets the color values
+    locations = ~state.abbr # Matches cases to polygons
+    ) %>%
+  layout(geo = list(scope = 'usa')) # Restricts map only to USA
+```
+
+2. Limitation of plot_geo()
+
+locationmode: "USA-states" | "ISO-3" | "country names"
+
+3. Mapping options
+
+* scope = "usa" 
+
+"world"| "usa"| "europe"| "asia"| "africa"| "north america"| "south america"
+
+* projection = list(type ="mercator")
+
+"conic conformal"| "mercator"| "robinson"| "stereographic"| and 18 more...
+
+* scale = 1
+
+Larger values = tighter zoom
+
+* center = list(lat = ~c.lat, lon = ~c.lon)
+
+Set c.lat and c.lon to center the map
+
+```{r}
+# Create a choropleth map of the change in voter turnout from 2014 to 2018
+turnout %>%
+  mutate(change = turnout2018 - turnout2014) %>%
+  plot_geo(locationmode = 'USA-states') %>%
+  add_trace(z = ~change, locations = ~state.abbr) %>%
+  layout(geo = list(scope = "usa"))
+```
+
+This task requires you to map a factor to the fill color. However, the z aesthetic expects a numeric variable. An easy work around is to convert party to a numeric variable via as.numeric(party) and then manually specify the desired colors in add_trace(). Additionally, the colorbar is no longer very useful, and can be removed by adding the layer hide_colorbar().
+
+```{r}
+# Create a choropleth map displaying the Senate results
+senate_winners %>%
+  plot_geo(locationmode = 'USA-states') %>%
+  add_trace(z = ~as.numeric(party), locations = ~state,
+    colors = c("dodgerblue", "mediumseagreen", "tomato"),
+    hoverinfo = "text",
+    text = ~paste("Candidate:", name, "<br>",
+                  "Party:", party, "<br>",
+                  "% vote:", round(pct.vote, 1))
+  ) %>%
+  layout(geo = list(scope = 'usa')) %>% 
+  hide_colorbar()
+```
+```{r eval=FALSE}
+
+# Map President Trump's rallies in 2018
+rallies2018 %>%
+  plot_geo(locationmode = 'USA-states') %>%
+  add_markers(
+    x = ~long, y = ~lat, size = ~no.speakers,  
+    hoverinfo = "text", text = ~paste(city, state, sep = ",")
+  ) %>%
+  layout(title = "2018 Trump Rallies", 
+      geo = list(scope = "usa"))
+```
+This it is quite easy to customize by specifying additional arguments in the list passed to geo in layout().
+
+In this exercise you will explore a few useful options outlined below:
+
+* To change the color of the landmass, add the arguments showland = TRUE and set a landcolor.
+
+* To make lakes distinct from landmasses, add the arguments showlakes = TRUE and set a lakecolor.
+
+* To display states/provinces, set showsubunit = TRUE, and the set subunitcolor.
+
+* To display countries, set showcountries = TRUE, and the set countrycolor.
+
+Note that you must use the toRGB() function in order to pass R colors to the geo layout.
+
+```{r eval = FALSE}
+# Customize the geo layout
+g <- list(scope = 'usa', 
+          showland = TRUE, landcolor = toRGB("gray90"),
+          showlakes = TRUE, lakecolor = toRGB("white"),
+          showsubunit = TRUE, subunitcolor = toRGB("white"))
+
+# Apply the geo layout to the map
+rallies2018 %>%
+  plot_geo(locationmode = 'USA-states') %>%
+  add_markers(
+    x = ~long, y = ~lat, size = ~no.speakers, 
+    hoverinfo = "text", text = ~paste(city, state, sep = ",")
+  ) %>%
+  layout(title = "2018 Trump Rallies", geo = g)
+```
+
+
+## From polygons to maps
+
+1. Joining data frames
+
+```{r eval = FALSE}
+turnout <- turnout %>%
+  mutate(state = tolower(state)) # make state names lowercase
+  
+states_map <- left_join(us_states, turnout, by = c("region" = "state"))
+```
+
+2. Creating the map
+
+```{r eval = FALSE}
+states_map %>%
+  group_by(group) %>%
+  plot_ly(
+    x = ~long,
+    y = ~lat,
+    color = ~turnout2018, # variable mapped to fill color
+    split = ~region # no more than one fill color per polygon
+  ) %>%
+  add_polygons(
+    line = list(width = 0.4),
+    showlegend = FALSE
+  )
+```
+
+
+3. Polishing your map
+
+```{r eval=FALSE}
+state_turnout_map %>%
+  layout(
+    title = "2018 Voter Turnout by State", 
+    xaxis = list(title ="", showgrid = FALSE,
+                 zeroline = FALSE, showticklabels = FALSE),
+    yaxis = list(title ="", showgrid = FALSE,
+                 zeroline = FALSE, showticklabels = FALSE)
+  ) %>%
+  colorbar(title ="Turnout")
+```
+
+
+```{r eval=FALSE}
+# Create a choropleth map displaying the Senate winners
+senate_map %>%
+  group_by(group) %>%
+  plot_ly(x=~long, y=~lat, color = ~party, split = ~region) %>%
+  add_polygons(line = list(width = 0.4), showlegend=FALSE)
+
+# Adjust the polygon colors and boundaries
+senate_map %>%
+  group_by(group) %>%
+  plot_ly(x = ~long, y = ~lat, color = ~party, split = ~region,
+          colors = c("dodgerblue", "mediumseagreen", "tomato")) %>%
+  add_polygons(line = list(width = 0.4,color = toRGB("gray60")), showlegend = FALSE)
+
+# Define the layout settings to polish the axes
+map_axes <- list(title = "", showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE)
+
+# Apply the layout to both axes
+senate_map %>%
+  group_by(group) %>%
+  plot_ly(x = ~long, y = ~lat, color = ~party, split = ~region,
+          colors = c("dodgerblue", "mediumseagreen", "tomato")) %>%
+  add_polygons(line = list(width = 0.4, color = toRGB("gray60")), showlegend = FALSE) %>%
+  layout(xaxis = map_axes, yaxis = map_axes)
+
+
+```
+
+```{r}
+# Join the fl_boundaries and fl_results data frames
+senate_vote <- left_join(fl_boundaries, fl_results, by = c("subregion" = "CountyName"))
+
+# Create a county-level choropleth map of Pctvote
+senate_vote %>%
+  group_by(group) %>%
+  plot_ly(x = ~long, y = ~lat, 
+          color = ~Pctvote,
+          split = ~subregion) %>%
+  add_polygons(line = list(width = 0.4), showlegend = FALSE, colors = c("blue", "red"))
+
+# Join the fl_boundaries and fl_results data frames
+senate_vote <- left_join(fl_boundaries, fl_results, by = c("subregion" = "CountyName"))
+
+# Specify the axis settings to polish the map
+map_axes <- list(title="", showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE)
+
+# Create a polished county-level choropleth map of Pctvote
+senate_vote %>%
+  group_by(group) %>%
+  plot_ly(x = ~long, y = ~lat, 
+          color = ~Pctvote,
+          split = ~subregion) %>%
+  add_polygons(line = list(width = 0.4), showlegend = FALSE, colors = c("blue", "red")) %>%
+  layout(xaxis = map_axes, yaxis = map_axes)
+```
+
+
+## Going further
+
+Books
+
+* [Plotly for R](https://plotly-r.com/) by Carson Sievert
+
+* [Interactive Graphics for Data Analysis](https://www.crcpress.com/Interactive-Graphics-for-Data-Analysis-Principles-and-Examples/Theus-Urbanek/p/book/9781584885948)
+
+* [Interactive and Dynamic Graphics for Data Analysis](https://link.springer.com/book/10.1007/978-0-387-71762-3)
+
+Community
+
+* [community.plot.ly](https://community.plotly.com/) don't hesitate to ask the community a question!
+
+Manuals
+
+* [plot.ly/r](https://plotly.com/r/): Quick examples along with indepth documentation
+
+* [plotly cheatsheet](https://images.plot.ly/plotly-documentation/images/r_cheat_sheet.pdf?_ga=2.262472844.1660058896.1542557393-851051236.1530303515)
+
+Forging ahead
+
+* [Putting your charts online](https://plotly.com/r/getting-started/#initialization-for-online-plotting)
+
+* Linked and/or animated graphics
+
+* shiny + plot.ly
