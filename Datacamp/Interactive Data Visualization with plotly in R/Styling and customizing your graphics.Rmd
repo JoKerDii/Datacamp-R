@@ -1,0 +1,332 @@
+---
+title: "Interactive Data Visualization with plotly in R_Styling and customizing your graphics"
+author: "dizhen"
+date: "2020/4/16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Customize your traces
+
+```{r}
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(plotly)
+
+wine <- read_csv("data/wine_data/wine.csv")
+glimpse(wine)
+winequality <- read_csv("data/wine_data/winequality.csv")
+glimpse(winequality)
+vgsales <- read_csv("data/vgsales.csv")
+glimpse(vgsales)
+```
+
+1. Color
+
+```{r}
+winequality %>%
+  plot_ly(x = ~fixed_acidity) %>%
+  add_histogram()
+
+winequality %>%
+  plot_ly(x = ~fixed_acidity) %>%
+  add_histogram(color = I("red")) # Setting color
+
+```
+
+2. Opacity
+
+```{r}
+winequality %>%
+  plot_ly(x = ~residual_sugar, y = ~fixed_acidity) %>%
+  add_markers()
+
+
+winequality %>%
+  plot_ly(x = ~residual_sugar, y = ~fixed_acidity) %>%
+  add_markers(marker = list(opacity = 0.2)) # Adjust opacity
+```
+
+3. Symbols
+
+```{r}
+winequality %>%
+  plot_ly(x = ~residual_sugar, y = ~fixed_acidity) %>%
+  add_markers(marker = list(symbol = "circle-open")) # Change symbol
+```
+
+4.Marker options
+
+* opacity
+
+* color
+
+* symbol (scatter/box)
+
+* size (scatter)
+
+* width (bar/histogram)
+
+
+### Practice
+
+```{r}
+vgsales2016 = vgsales %>%
+	filter(Year == 2016)
+
+# Create a histogram of Critic_Score with navy bars that are 50% transparent
+vgsales2016 %>%
+  plot_ly(x = ~Critic_Score) %>%
+  add_histogram(color = I("navy"), opacity = 0.5)
+```
+
+```{r}
+# Change the color of the histogram using a hex code
+vgsales2016 %>%
+  plot_ly(x = ~Critic_Score) %>%
+  add_histogram(color = I("#111e6c"))
+
+# Change the color of the histogram using rgb()
+vgsales2016 %>%
+  plot_ly(x = ~Critic_Score) %>%
+  add_histogram(marker = list(color = "rgb(17, 30, 108)"))
+```
+
+```{r}
+# Set the plotting symbol to diamond and the size to 4
+plot_ly(data = vgsales2016, x = ~User_Score, y = ~Critic_Score) %>% 
+	add_markers(marker = list(symbol = "diamond", size=4)) 
+```
+
+## Thoughtful use of color
+
+1. Adding a third variable
+```{r}
+wine %>%
+  plot_ly(x = ~Flavanoids, y = ~Alcohol, color = ~Type) %>%
+  add_markers()
+```
+
+2. Adding a quantitative variable
+```{r}
+wine %>%
+  plot_ly(x = ~Flavanoids, y = ~Alcohol, color = ~Color) %>%
+  add_markers()
+```
+
+3. RColorBrewer palettes
+```{r}
+wine %>%
+  plot_ly(x = ~Flavanoids, y = ~Alcohol, color = ~Type) %>%
+  add_markers(colors = "Dark2")
+```
+
+4. Manual palettes
+```{r}
+wine %>%
+  plot_ly(x = ~Flavanoids, y = ~Alcohol, color = ~Type) %>%
+  add_markers(colors = c("orange", "black", "skyblue"))
+```
+
+### Practice
+
+```{r}
+# Use color to add Genre as a third variable
+vgsales2016 %>%
+  plot_ly(x=~Critic_Score, y=~User_Score, color = ~Genre) %>%
+  add_markers(colors = "Dark2")
+```
+
+```{r}
+# Create a scatterplot of User_Score against Critic_Score coded by Rating
+vgsales2016 %>%
+   plot_ly(x = ~Critic_Score, y = ~User_Score, symbol = ~Rating) %>%
+   add_markers()
+```
+
+```{r}
+# Create a scatterplot of User_Score vs. Critic_Score colored by User_Count
+vgsales2016 %>%
+  plot_ly(x = ~Critic_Score, y = ~User_Score, color = ~User_Count) %>%
+  add_markers()
+
+```
+
+```{r}
+# Create a scatterplot of User_Score vs. Critic_Score colored by log User_Count
+vgsales2016 %>%
+  plot_ly(x = ~Critic_Score, y = ~User_Score,color = ~log(User_Count)) %>%
+  add_markers()
+```
+
+
+## Hover info (Labeling your data)
+
+1. Changing the default
+
+hoverinfo =
+
+* "all"
+
+* "x"
+
+* "y"
+
+* "x+y"
+
+* "x+y+z"
+
+
+```{r}
+wine %>%
+  count(Type) %>%
+  plot_ly(x = ~Type, y = ~n,
+          
+          # Changing the default info displaye
+          hoverinfo = "y") %>%
+  add_bars()
+```
+
+2. Custom hover text
+
+tilde,~,to map columns to aesthetic parameters
+
+```{r}
+wine %>%
+  plot_ly(x = ~Flavanoids, y = ~Alcohol, hoverinfo = "text", 
+          text = ~paste("Flavanoids:", Flavanoids, "<br>", "Alcohol:", Alcohol)) %>%
+  add_markers()
+
+```
+
+
+### Practice
+
+```{r}
+# Create a bar chart of Platform with hoverinfo only for the bar heights
+vgsales2016 %>%
+	count(Platform) %>%
+	plot_ly(x = ~Platform, y = ~n, hoverinfo = "y") %>%
+ 	add_bars()
+```
+
+```{r}
+
+# Create a scatterplot of User_Score vs. Critic score
+vgsales2016 %>%
+	# Add video game Name to the hover info text
+	plot_ly(x = ~Critic_Score, y = ~User_Score, text = ~Name) %>% 
+	add_markers()
+```
+
+```{r}
+
+# Format the hover info for NA_Sales, EU_Sales, and Name
+vgsales2016 %>%
+  plot_ly(x = ~NA_Sales, y = ~EU_Sales,
+          hoverinfo = "text",
+          text = ~paste("NA_Sales:", NA_Sales, "<br>",
+                     "EU_Sales:", EU_Sales, "<br>",
+                     "Name:", Name)
+  ) %>%
+  add_markers()
+```
+
+
+## Customizing your layout
+
+layout()
+
+* axes:type, labels,tick marks,transformations, etc.
+
+* legend: position
+
+* canvas: grid lines, background color
+
+* size: height, width, margins
+
+1. Axis labels
+
+```{r}
+winequality %>%
+  plot_ly(x = ~free_so2, y = ~total_so2) %>%
+  add_markers(marker = list(opacity = 0.2))
+
+winequality %>%
+  plot_ly(x = ~free_so2, y = ~total_so2) %>%
+  add_markers(marker = list(opacity = 0.2)) %>%
+  layout(xaxis = list(title = "Free SO2 (ppm)"), yaxis = list(title = "Total SO2 (ppm)"))
+
+```
+
+2. Titles
+
+```{r}
+winequality %>%
+  plot_ly(x = ~free_so2, y = ~total_so2) %>%
+  add_markers(marker = list(opacity = 0.2)) %>%
+  layout(xaxis = list(title = "Free SO2 (ppm)"), 
+         yaxis = list(title = "Total SO2 (ppm)"), 
+         title = "Does free SO2 predict total SO2 in wine?")
+```
+
+3. Transforming axes
+
+```{r}
+winequality %>%
+  plot_ly(x = ~free_so2, y = ~total_so2) %>%
+  add_markers(marker = list(opacity = 0.2)) %>%
+  layout(xaxis = list(title = "Free SO2 (ppm, log scale)", type = "log"),
+         yaxis = list(title = "Total SO2 (ppm, log scale)", type = "log"),
+         title = "Does free SO2 predict total SO2 in wine?")
+```
+
+4. Customizing the grid
+```{r}
+winequality %>%
+  plot_ly(x = ~free_so2, y = ~total_so2) %>%
+  add_markers(marker = list(opacity = 0.5)) %>%
+  layout(xaxis = list(title = "Free SO2 (ppm)" , zeroline = FALSE),
+         yaxis = list(title = "Total SO2 (ppm)", zeroline = FALSE, showgrid = FALSE))
+```
+
+5. Customizing the canvas 
+
+```{r}
+winequality %>%
+  plot_ly(x = ~free_so2, y = ~total_so2) %>%
+  add_markers(marker = list(opacity = 0.5)) %>%
+  layout(xaxis = list(title = "Free SO2 (ppm)"),
+         yaxis = list(title = "Total SO2 (ppm)"),
+         plot_bgcolor = toRGB("gray90"),
+         paper_bgcolor = toRGB("skyblue"))
+
+```
+
+### Practice
+
+```{r}
+
+# Polish the scatterplot by transforming the x-axis and labeling both axes
+vgsales2016 %>%
+  plot_ly(x = ~Global_Sales, y = ~Critic_Score) %>%
+  add_markers(marker = list(opacity = 0.5)) %>%
+  layout(xaxis = list(title="Global sales (millions of units)",type = "log"),
+         yaxis = list(title = "Critic score"))
+
+```
+
+```{r}
+annual_vgsales<- vgsales %>% group_by(Year) %>% summarise(Global_Sales = sum(Global_Sales))
+
+# Set the background color to #ebebeb and remove the vertical grid
+annual_vgsales %>%
+  plot_ly(x = ~Year, y = ~Global_Sales) %>%
+  add_lines() %>%
+  layout(xaxis = list(showgrid = FALSE),
+  paper_bgcolor = "#ebebeb")
+```

@@ -1,0 +1,207 @@
+---
+title: "Interactive Data Visualization with plotly in R_Introduction to plotly"
+author: "dizhen"
+date: "2020/4/15"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(plotly)
+
+wine <- read_csv("data/wine_data/wine.csv")
+glimpse(wine)
+
+static <- wine %>%
+  ggplot(aes(x = Flavanoids, y = Proline, color = factor(Type))) +
+  geom_point()
+static
+
+ggplotly(static)
+```
+
+### Practice
+
+```{r}
+vgsales <- read_csv("data/vgsales.csv")
+
+# Store the scatterplot of Critic_Score vs. NA_Sales sales in 2016
+scatter <- vgsales %>%
+			filter(Year == 2016) %>%
+			ggplot(aes(x = NA_Sales, y = Critic_Score)) +
+			geom_point(alpha = 0.3)
+
+# Convert the scatterplot to a plotly graphic
+ggplotly(scatter)
+```
+
+
+
+## Univariate graphics
+
+1. Bar charts with plotly
+```{r}
+wine <- read_csv("data/wine_data/wine.csv")
+
+wine %>%
+  count(Type) %>%
+  plot_ly(x = ~Type, y = ~n) %>%
+  add_bars()
+```
+
+2. Reordering the bars
+
+```{r}
+library(forcats)
+
+wine %>%
+  count(Type) %>%
+  mutate(Type = fct_reorder(factor(Type), n, .desc = TRUE)) %>%
+  plot_ly(x = ~Type, y = ~n) %>%
+  add_bars()
+```
+
+3. Histograms with plotly
+```{r}
+wine %>%
+  plot_ly(x = ~Phenols) %>% # specify aesthetics
+  add_histogram() # add the histogram trace
+```
+
+4. Adjusting the number of bins and bin width
+
+```{r}
+wine %>%
+  plot_ly(x = ~Phenols) %>%
+  add_histogram(nbinsx = 10)
+
+wine %>%
+  plot_ly(x = ~Phenols) %>%
+  add_histogram(xbins = list(start = 0.8, end = 4, size = 0.25))
+```
+
+### Practice
+
+```{r}
+# Create a histogram of Critic_Score
+vgsales %>%
+	plot_ly(x = ~Critic_Score) %>%
+	add_histogram()	
+
+# Create a histogram of Critic_Score with at most 25 bins
+vgsales %>%
+	plot_ly(x = ~Critic_Score) %>%
+	add_histogram(nbinsx = 25)
+
+# Create a histogram with bins of width 10 between 0 and 100
+vgsales %>%
+  plot_ly(x = ~Critic_Score) %>%
+  add_histogram(xbins = list(start = 0, end = 100,size = 10))
+```
+
+```{r}
+# Create a frequency for Genre
+genre_table <- vgsales %>%
+	count(Genre)
+
+# Create a bar chart of Genre
+genre_table %>%
+	plot_ly(x = ~Genre, y = ~n) %>%
+	add_bars()
+
+# Reorder the bars for Genre by n
+genre_table %>%
+	mutate(Genre = fct_reorder(Genre, n, .desc = TRUE)) %>%
+	plot_ly(x = ~Genre, y = ~n) %>% 
+	add_bars()  
+
+```
+
+
+## Bivariate graphics
+
+```{r}
+winequality <- read_csv("data/wine_data/winequality.csv")
+glimpse(winequality)
+```
+
+1. Scatterplots with plotly
+
+```{r}
+winequality %>%
+  plot_ly(x = ~residual_sugar, y = ~fixed_acidity) %>%
+  add_markers()
+```
+
+2. Stacked bar charts with plotly
+
+```{r}
+winequality %>%
+  count(type, quality_label) %>%
+  plot_ly(x = ~type, y = ~n, color = ~quality_label) %>%
+  add_bars() %>%
+  layout(barmode = "stack")
+```
+
+3. From counts to proportions
+
+```{r}
+winequality %>%
+  count(type, quality_label) %>%
+  group_by(type) %>%
+  mutate(prop = n / sum(n)) %>%
+  plot_ly(x = ~type, y = ~prop, color = ~quality_label) %>%
+  add_bars() %>%
+  layout(barmode = "stack")
+
+```
+
+4. Boxplots with plotly
+
+```{r}
+winequality %>%
+  plot_ly(x = ~quality_label, y = ~alcohol) %>%
+  add_boxplot()
+```
+
+
+### Practice
+
+```{r}
+# Create a scatter plot of User_Score against Critic_Score
+vgsales %>% 
+  plot_ly(x = ~Critic_Score, y = ~User_Score) %>%
+  add_markers()
+```
+
+```{r}
+# Filter out the 2016 video games
+vg2016 <- vgsales %>%
+	filter(Year == 2016)
+
+# Create a stacked bar chart of Rating by Genre
+vg2016 %>%
+	count(Genre,Rating) %>%
+	plot_ly(x = ~Genre, y = ~n, color = ~Rating) %>%
+  	add_bars() %>%
+  	layout(barmode = "stack")
+```
+
+```{r}
+# Filter out the 2016 video games
+vg2016 <- vgsales %>%
+	filter(Year == 2016)
+
+# Create boxplots of Global_Sales by Genre for above data
+vg2016 %>% 
+  plot_ly(x = ~Global_Sales, y = ~Genre) %>%
+  add_boxplot()
+```

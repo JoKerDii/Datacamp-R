@@ -1,0 +1,397 @@
+---
+title: "Interactive Data Visualization with plotly in R_Advanced charts"
+author: "dizhen"
+date: "2020/4/16"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Layering traces
+
+```{r}
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(plotly)
+
+wine <- read_csv("data/wine_data/wine.csv")
+glimpse(wine)
+```
+
+Adding a smoother
+
+```{r}
+m <- loess(Alcohol ~ Flavanoids, data = wine, span = 1.5)
+wine %>%
+  plot_ly(x = ~Flavanoids, y = ~Alcohol) %>%
+  add_markers() %>%
+  add_lines(y = ~fitted(m)) %>%
+  layout(showlegend = FALSE)
+```
+
+Adding a second smoother
+
+```{r}
+m2 <- lm(Alcohol ~ poly(Flavanoids, 2), data = wine)
+wine %>%
+  plot_ly(x = ~Flavanoids, y = ~Alcohol) %>%
+  add_markers(showlegend = FALSE) %>%
+  add_lines(y = ~fitted(m), name = "LOESS") %>%
+  add_lines(y = ~fitted(m2), name = "Polynomial")
+```
+
+Layering densities
+
+```{r}
+d1 <- filter(wine, Type == 1)
+d2 <- filter(wine, Type == 2)
+d3 <- filter(wine, Type == 3)
+
+
+density1 <- density(d1$Flavanoids)
+density2 <- density(d2$Flavanoids)
+density3 <- density(d3$Flavanoids)
+
+plot_ly(opacity = 0.5) %>%
+  add_lines(x = ~density1$x, y = ~density1$y, name = "Type 1") %>%
+  add_lines(x = ~density2$x, y = ~density2$y, name = "Type 2") %>%
+  add_lines(x = ~density3$x, y = ~density3$y, name = "Type 3") %>%
+  layout(xaxis = list(title = 'Flavonoids'),yaxis = list(title = 'Density'))
+```
+
+### Practice
+
+Adding a linear smoother
+
+```{r}
+vgsales <- read_csv("data/vgsales.csv")
+vgsales$User_Score <- as.numeric(vgsales$User_Score)
+vgsales$Critic_Score <- as.numeric(vgsales$Critic_Score)
+vgsales2016 <- vgsales %>% filter(Year == 2016) %>% na.omit()
+
+
+# Fit the regression model of User_Score on Critic_Score
+m <- lm(User_Score ~ Critic_Score, data = vgsales2016)
+
+# Create the scatterplot with smoother
+vgsales2016 %>%
+   select(User_Score, Critic_Score) %>%
+   na.omit() %>%
+   plot_ly(x = ~Critic_Score, y = ~User_Score) %>%
+   add_markers(showlegend = FALSE) %>%
+   add_lines(y = ~fitted(m))
+```
+
+Overlayed density plots
+
+```{r}
+d <- density(vgsales2016$Critic_Score, na.rm = TRUE)
+plot_ly() %>%
+  add_lines(x = ~d$x, y = ~d$y, fill = 'tozeroy') %>%
+  layout(xaxis = list(title = 'Critic score'),
+         yaxis = list(title = 'Density'))
+```
+
+
+```{r}
+# Compute density curves
+d.a <- density(filter(vgsales, Publisher== "Activision")$Critic_Score, na.rm = TRUE)
+# d.e <- density(filter(vgsales, Publisher== "EA")$Critic_Score, na.rm = TRUE)
+d.n <- density(filter(vgsales, Publisher== "Nintendo")$Critic_Score, na.rm = TRUE)
+
+# Overlay density plots
+plot_ly() %>%
+  add_lines(x = ~d.a$x, y = ~d.a$y, name = "Activision", fill = 'tozeroy') %>%
+  # add_lines(x = ~d.e$x, y = ~d.e$y, name = "Electronic Arts", fill = 'tozeroy') %>%
+  add_lines(x = ~d.n$x, y = ~d.n$y, name = "Nintendo", fill = 'tozeroy') %>%
+  layout(xaxis = list(title = 'Critic Score'),
+         yaxis = list(title = 'Density'))
+
+```
+
+## Subplots
+
+1. Representing many categories
+
+```{r}
+vgsales2016 %>%
+  plot_ly(x = ~Critic_Score, y = ~User_Score, color = ~Genre) %>%
+  add_markers()
+```
+
+2. A single subplot
+
+```{r}
+action_df <- vgsales2016 %>%
+  filter(Genre == "Action")
+glimpse(action_df)
+
+action_df %>%
+  plot_ly(x = ~Critic_Score, y = ~User_Score) %>%
+  add_markers()
+```
+3. Two subplots
+
+```{r}
+p1 <- action_df %>%
+  plot_ly(x = ~Critic_Score, y = ~User_Score) %>%
+  add_markers()
+p2 <- vgsales2016 %>%
+  filter(Genre == "Adventure") %>%
+  plot_ly(x = ~Critic_Score, y = ~User_Score) %>%
+  add_markers()
+
+subplot(p1, p2, nrows = 1)
+```
+
+4. Legends
+
+```{r}
+p1 <- action_df %>%
+  plot_ly(x = ~Critic_Score, y = ~User_Score) %>%
+  add_markers(name = ~Genre)
+p2 <- vgsales2016 %>%
+  filter(Genre == "Adventure") %>%
+  plot_ly(x = ~Critic_Score, y = ~User_Score) %>%
+  add_markers(name = ~Genre)
+
+subplot(p1, p2, nrows = 1)
+```
+
+5. Axis labels
+
+```{r}
+subplot(p1, p2, nrows = 1, shareY = TRUE, shareX = TRUE)
+```
+
+
+6. group_by() + do()
+```{r}
+vgsales2016 %>%
+  group_by(Genre) %>%
+  do(plot = plot_ly(data = ., x = ~Critic_Score, y = ~User_Score) %>%
+  add_markers(name = ~Genre)) %>%
+  subplot(nrows = 2)
+```
+
+### Practice
+
+Manual faceting
+
+
+```{r}
+# Create a scatterplot of User_Score against Critic_Score for PS4 games
+p1 <- vgsales2016 %>%
+   filter(Platform == "PS4") %>%
+   plot_ly(x = ~Critic_Score, y = ~User_Score) %>% 
+   add_markers(name = "PS4")
+
+# Create a scatterplot of User_Score against Critic_Score for XOne games
+p2 <- vgsales2016 %>%
+   filter(Platform == "XOne") %>%
+   plot_ly(x = ~Critic_Score, y = ~User_Score) %>% 
+   add_markers(name = "XOne")
+
+# Create a facted scatterplot containing p1 and p2
+subplot(p1, p2, nrows = 2)
+```
+
+Automated faceting
+
+```{r}
+# Create a faceted scatterplot of User_Score vs. Critic_Score with 3 rows
+vgsales2016 %>%
+  group_by(Platform) %>%
+  do(
+    plot = plot_ly(data = ., x=~Critic_Score, y=~User_Score) %>%
+      add_markers(name = ~Platform)
+  ) %>%
+  subplot(nrows = 3, shareY = TRUE, shareX = TRUE)
+```
+
+By default, the subplot() command sets titleX = shareX and titleY = shareY; thus, axis labels are only displayed if shareX and/or shareY are TRUE. You can add titleX = TRUE and/or titleY = TRUE to override this behavior.
+
+```{r}
+# Add x-axis and y-axis labels, and a title
+subplot(p1, p2, nrows = 2, shareX = TRUE, shareY = TRUE) %>%
+   layout(title = "User score vs. critic score by platform, 2016")
+```
+multiple x-axes to rename
+
+```{r eval=FALSE}
+p %>% # subplot
+   layout(
+     xaxis = list(title = "title 1"), 
+     xaxis2 = list(title = "title 2"),
+     xaxis3 = list(title = "title 3"), 
+     xaxis4 = list(title = "title 4")
+   )
+```
+```{r}
+library(forcats)
+
+a <- vgsales%>%
+  filter(Publisher == "Activision"| Publisher == "Sony Computer Entertainment" |Publisher == "Ubisoft" | Publisher == "Electronic Arts"| Publisher == "Nintendo" ) %>%
+  group_by(Publisher)%>%
+  summarise(total_sales = sum(Global_Sales))%>%
+  mutate(Publisher = fct_reorder(factor(Publisher), total_sales, .desc = TRUE))
+
+s1<- a%>%plot_ly(x=~Publisher,y=~total_sales, color = ~Publisher) %>% add_bars(name = ~Publisher)
+s1
+
+  
+b <- vgsales%>%
+  filter(Publisher == "Activision"| Publisher == "Sony Computer Entertainment" |Publisher == "Ubisoft" | Publisher == "Electronic Arts"| Publisher == "Nintendo" ) %>%
+  group_by(Publisher,Year)%>%
+  summarise(total_sales = sum(Global_Sales))
+
+s2 <- b%>%plot_ly(x=~Year,y=~total_sales, color = ~Publisher) %>% add_lines(name = ~Publisher)
+
+s2
+
+sp2 <- subplot(s1, s2, nrows = 1, shareX = FALSE, shareY = FALSE) 
+sp2
+
+# Add x-axis and y-axis labels, and a title to  sp2
+sp2 %>%
+   layout(
+     xaxis = list(title = ""),
+     xaxis2 = list(title = "Year"),
+     yaxis = list(title = "Global Sales (M units)"),
+     yaxis2 = list(title = "Global Sales (M units)")
+   )
+```
+
+## Scatterplot matrices
+
+1. The template
+
+* add_trace() to specify variables
+
+* For each variable,two arguments:
+
+String for axis label
+
+Mapping specifying variable
+
+* 'splom' trace type = scatterplot matrix
+
+```{r eval=FALSE}
+data %>%
+  plot_ly() %>%
+  add_trace(
+    type = 'splom',
+    dimensions = list(
+      list(label='string-1', values=X1),
+      list(label='string-2', values=X2),
+      .
+      .
+      .
+      list(label='string-n', values=Xn))
+  )
+```
+
+2. Wine SPLOM
+
+```{r}
+wine %>%
+  plot_ly() %>%
+  add_trace(type = 'splom',
+            dimensions = list(
+              list(label='Alcohol', values=~Alcohol),
+              list(label='Flavonoids', values=~Flavanoids),
+              list(label='Color', values=~Color))
+            )
+
+
+```
+
+3. Adding color
+
+```{r}
+wine %>%
+  plot_ly(color = ~factor(Type)) %>%
+  add_trace( type = 'splom',
+             dimensions = list(
+               list(label='Alcohol', values=~Alcohol),
+               list(label='Flavonoids', values=~Flavanoids),
+               list(label='Color', values=~Color))
+             )
+```
+
+### Practice
+
+```{r}
+# Create a SPLOM of NA_Sales, EU_Sales, and JP_Sales
+vgsales2016 %>%
+  plot_ly() %>%
+  add_trace(
+    type = 'splom',
+    dimensions = list(
+      list(label = 'N. America', values = ~NA_Sales),
+      list(label = 'Europe', values = ~EU_Sales),
+      list(label = 'Japan', values = ~JP_Sales)
+    )
+  )
+```
+
+```{r}
+
+# Color the SPLOM of NA_Sales, EU_Sales, and JP_Sales by nintendo
+splom <- vgsales2016 %>%
+  mutate(nintendo = ifelse(Publisher == "Nintendo", "Nintendo", "Other")) %>%
+  plot_ly(color = ~nintendo) %>% 
+  add_trace(
+    type = "splom",                                  
+    dimensions = list(
+      list(label = 'N. America', values = ~NA_Sales),
+      list(label = 'Europe', values = ~EU_Sales),
+      list(label = 'Japan', values = ~JP_Sales
+    )
+  ))
+  
+splom
+```
+
+```{r}
+# Delete the diagonal plots in splom
+splom %>%
+   style(diagonal = list(visible = FALSE))
+
+# Delete the plots in the upper half of splom
+splom %>%
+   style(showupperhalf = FALSE)
+
+# Delete the plots in the lower half of splom
+splom %>%
+   style(showlowerhalf = FALSE)
+
+```
+
+
+## Binned scatterplots
+
+```{r eval = FALSE}
+sim_data %>%
+  plot_ly(x = ~x, y = ~y) %>%
+  add_histogram2d()
+
+sim_data %>%
+  plot_ly(x = ~x, y = ~y) %>%
+  add_histogram2d(nbinsx = 200, nbinsy = 100)
+
+```
+
+### Practice
+
+```{r}
+# Create a binned scatterplot of User_Score vs. Critic_Score
+vgsales %>%
+  plot_ly(y=~User_Score, x=~Critic_Score) %>%
+  add_histogram2d(nbinsy=50, nbinsx=50)
+```
