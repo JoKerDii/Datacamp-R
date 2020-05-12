@@ -1,153 +1,150 @@
 ---
 title: "Datacamp_Introduction_to_Tidyverse__Data_wrangling"
 author: "dizhen"
-date: "2019Äê4ÔÂ3ÈÕ"
-output: html_document
+date: "2019/4/3"
+output:
+  pdf_document: default
+  html_document: default
 ---
-# Loading the gapminder and dplyr packages
 
-Before you can work with the gapminder dataset, you'll need to load two R packages that contain the tools for working with it, then display the gapminder dataset so that you can see what it contains.
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
-To your right, you'll see two windows inside which you can enter code: The script.R window, and the R Console. All of your code to solve each exercise must go inside script.R.
-
-If you hit Submit Answer, your R script is executed and the output is shown in the R Console. DataCamp checks whether your submission is correct and gives you feedback. You can hit Submit Answer as often as you want. If you're stuck, you can ask for a hint or a solution.
-
-You can use the R Console interactively by simply typing R code and hitting Enter. When you work in the console directly, your code will not be checked for correctness so it is a great way to experiment and explore.
-
-Instructions:
-
-1. Use the library() function to load the dplyr package, just like we've loaded the gapminder package for you.
-
-2. Type gapminder, on its own line, to look at the gapminder dataset.
+## The gapminder dataset
 
 ```{r}
 # Load the gapminder package
 # install.packages("gapminder")
-library(gapminder)
+# library(gapminder)
+gapminder <- read.table(file = 'data/gapminder.tsv', sep = '\t', header = TRUE)
 
 # Load the dplyr package
 library(dplyr)
+library(tidyverse)
 
 # Look at the gapminder dataset
-gapminder
+head(gapminder)
+str(gapminder)
 ```
 
-# Understanding a data frame
 
-Now that you've loaded the gapminder dataset, you can start examining and understanding it.
+## The filter verb
 
-We've already loaded the gapminder and dplyr packages. Type gapminder in your R terminal, to the right, to display the object.
-
-How many observations (rows) are in the dataset? 1704
-
-# Filtering for one year
-
-The filter verb extracts particular observations based on a condition. In this exercise you'll filter for observations from a particular year.
-
-Instructions:
-
-1. Add a filter() line after the pipe (%>%) to extract only the observations from the year 1957. Remember that you use == to compare two values.
+filter() subsets observations
 
 ```{r}
-library(gapminder)
-library(dplyr)
+# Filtering for one year
+gapminder %>% 
+  filter(year == 2007) %>% head()
+```
+```{r}
+
+# Filtering for one country
+gapminder %>% 
+  filter(country == "United States") %>% head()
+
+```
+
+```{r}
+# Filtering for two variables
+gapminder %>% 
+  filter(year == 2007, country == "United States") %>% head()
+```
+```{r}
+
+```
+
+
+### Practice
+
+```{r}
 
 # Filter the gapminder dataset for the year 1957
-gapminder %>% filter(year == 1957)
+gapminder %>% filter(year == 1957) %>% head()
 ```
 
-# Filtering for one country and one year
-
-You can also use the filter() verb to set two conditions, which could retrieve a single observation.
-
-Just like in the last exercise, you can do this in two lines of code, starting with gapminder %>% and having the filter() on the second line. Keeping one verb on each line helps keep the code readable. Note that each time, you'll put the pipe %>% at the end of the first line (like gapminder %>%); putting the pipe at the beginning of the second line will throw an error.
 
 ```{r}
-library(gapminder)
-library(dplyr)
-
 # Filter for China in 2002
-gapminder %>% filter(year == 2002, country == 'China')
+gapminder %>% filter(year == 2002, country == 'China') %>% head()
 ```
 
-# Arranging observations by life expectancy
+## The arrange verb
 
-You use arrange() to sort observations in ascending or descending order of a particular variable. In this case, you'll sort the dataset based on the lifeExp variable.
-  
-Instructions:
-
-1. Sort the gapminder dataset in ascending order of life expectancy (lifeExp).
-
-2. Sort the gapminder dataset in descending order of life expectancy.
+arrange() sorts a table based on a variable
 
 ```{r}
-library(gapminder)
-library(dplyr)
+gapminder %>% 
+  arrange(gdpPercap) %>% head()
 
+# sort in descending order
+gapminder %>% 
+  arrange(desc(gdpPercap)) %>% head()
+```
+```{r}
+gapminder %>% 
+  filter(year == 2007) %>% 
+  arrange(desc(gdpPercap)) %>% head()
+```
+
+### Practice
+
+
+```{r}
 # Sort in ascending order of lifeExp
-gapminder %>% arrange(lifeExp)
+gapminder %>% arrange(lifeExp) %>% head()
 
 # Sort in descending order of lifeExp
-gapminder %>% arrange(desc(lifeExp))
+gapminder %>% arrange(desc(lifeExp)) %>% head()
 ```
 
-# Filtering and arranging
 
-You'll often need to use the pipe operator (%>%) to combine multiple dplyr verbs in a row. In this case, you'll combine a filter() with an arrange() to find the highest population countries in a particular year.
-
-Instructions:
-
-1. Use filter() to extract observations from just the year 1957, then use arrange() to sort in descending order of population (pop)
 ```{r}
-library(gapminder)
-library(dplyr)
-
 # Filter for the year 1957, then arrange in descending order of population
-gapminder %>% filter(year == 1957) %>% arrange(desc(pop))
+gapminder %>% filter(year == 1957) %>% arrange(desc(pop)) %>% head()
 ```
 
-# Using mutate to change or create a column
+## The mutate verb
 
-Suppose we want life expectancy to be measured in months instead of years: you'd have to multiply the existing value by 12. You can use the mutate() verb to change this column, or to create a new column that's calculated this way.
-
-Instructions:
-
-1. Use mutate() to change the existing lifeExp column, by multiplying it by 12: 12 * lifeExp.
-
-2. Use mutate() to add a new column, called lifeExpMonths, calculated as 12 * lifeExp.
+mutate changes or odds variables
 
 ```{r}
-library(gapminder)
-library(dplyr)
+# change a variable
+gapminder %>% mutate(pop = pop / 1000000) %>% head()
 
+# add a new variable
+gapminder %>% mutate(gdp = gdpPercap * pop)
+
+```
+```{r}
+# Combining verbs
+gapminder %>% 
+  mutate(gdp = gdpPercap * pop) %>% 
+  filter(year == 2007) %>% 
+  arrange(desc(gdp))
+```
+
+### Practice
+
+
+```{r}
 # Use mutate to change lifeExp to be in months
-gapminder %>% mutate(lifeExp = lifeExp * 12)
+gapminder %>% mutate(lifeExp = lifeExp * 12) %>% head()
 
 # Use mutate to create a new column called lifeExpMonths
-gapminder %>% mutate(lifeExpMonths = lifeExp * 12)
+gapminder %>% mutate(lifeExpMonths = lifeExp * 12) %>% head()
 
 ```
 
-# Combining filter, mutate, and arrange
 
-In this exercise, you'll combine all three of the verbs you've learned in this chapter, to find the countries with the highest life expectancy, in months, in the year 2007.
-
-Instructions:
-
-1. In one sequence of pipes on the gapminder dataset:
-
-filter() for observations from the year 2007,
-mutate() to create a column lifeExpMonths, calculated as 12 * lifeExp, and
-arrange() in descending order of that new column
 
 ```{r}
-library(gapminder)
-library(dplyr)
 
 # Filter, mutate, and arrange the gapminder dataset
 gapminder %>%
   filter(year == 2007) %>%
   mutate(lifeExpMonths = 12 * lifeExp) %>%
-  arrange(desc(lifeExpMonths))
+  arrange(desc(lifeExpMonths)) %>% head()
 ```
 
