@@ -1,0 +1,272 @@
+---
+title: "Multiple and Logistic Regression in R_Logistic Regression"
+author: "dizhen"
+date: "5/6/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## What is logistic regression?
+
+```{r}
+library(Stat2Data)
+library(ggplot2)
+library(dplyr)
+library(broom)
+data(MedGPA)
+
+```
+
+
+```{r}
+# create a scatterplot for acceptance as a function of GPA (y as a function of x)
+# scatterplot with jitter
+data_space <- ggplot(data = MedGPA, aes(y = Acceptance, x = GPA)) + 
+  geom_jitter(width = 0, height = 0.05, alpha = 0.5)
+
+# linear regression line
+data_space + 
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+```{r}
+# filter
+MedGPA_middle <- MedGPA %>%
+  filter(GPA >= 3.375, GPA <= 3.770)
+
+# scatterplot with jitter
+data_space <- ggplot(data = MedGPA_middle, aes(y = Acceptance, x = GPA)) + 
+  geom_jitter(width = 0, height = 0.05, alpha = 0.5)
+
+# linear regression line
+data_space + 
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+
+```{r}
+# fit model
+glm(Acceptance ~ GPA, data = MedGPA, family = binomial)
+```
+
+## Visualizing logistic regression
+
+Visualizing a binary response
+
+```{r}
+library(openintro)
+data("heartTr")
+heartTr <- heartTr %>%
+  mutate(is_alive = ifelse(survived == "dead", 0,1)) %>%
+  mutate(is_alive = as.factor(is_alive)) %>% 
+  na.omit()
+
+data_space <- ggplot(data = heartTr, aes(x = age, y = is_alive)) +
+  geom_jitter(width = 0, height = 0.05, alpha = 0.5)
+data_space
+```
+
+Regression with a binary response
+
+```{r}
+data_space +
+  geom_smooth(method = "lm", se = FALSE)
+
+```
+
+Fitting a GLM
+
+```{r}
+mod <- glm(is_alive ~ age, data = heartTr, family = binomial)
+mod
+```
+
+### Practice
+
+```{r}
+# scatterplot with jitter
+data_space <- ggplot(data = MedGPA, aes(y = Acceptance, x = GPA)) + 
+  geom_jitter(width = 0, height = 0.05, alpha = 0.5)
+
+# add logistic curve
+data_space +
+  geom_smooth(method = "glm", se = FALSE, method.args = list(family = "binomial"))
+```
+
+```{r}
+gpa_bins <- quantile(MedGPA$GPA, probs = seq(0, 1, 1/6))
+gpa_bins
+
+MedGPA$bins <- cut(MedGPA$GPA, breaks = gpa_bins, include.lowest = TRUE)
+head(MedGPA)
+
+MedGPA_binned <- MedGPA %>% 
+  group_by(bins) %>% 
+  summarize(mean_GPA = mean(GPA), acceptance_rate = mean(Acceptance))
+MedGPA_binned
+```
+
+
+
+```{r}
+library(broom)
+# fit model
+mod <- glm(Acceptance ~ GPA, data = MedGPA, family = binomial)
+mod
+
+# binned points and line
+data_space <- ggplot(data = MedGPA_binned, aes(x = mean_GPA, y = acceptance_rate)) + 
+  geom_point() + geom_line()
+
+# augmented model
+MedGPA_plus <- mod %>%
+  augment(type.predict = "response")
+
+# logistic model on probability scale
+data_space +
+  geom_line(data = MedGPA_plus, aes(x = GPA, y = .fitted), color = "red")
+```
+
+
+## Three scales approach to interpretation
+
+1. Probability scale
+
+```{r}
+
+mod <- glm(is_alive ~ age, data = heartTr, family = binomial)
+mod
+
+heartTr_plus <- mod %>%
+  augment(type.predict = "response") %>%
+  mutate(y_hat = .fitted);heartTr_plus
+```
+
+Probability scale plot
+
+```{r}
+ggplot(heartTr_plus, aes(x = age, y = y_hat)) +
+  geom_point() + geom_line() +
+  scale_y_continuous("Probability of being alive", limits = c(0, 1))
+```
+
+
+2. Odds scale
+
+```{r}
+heartTr_plus <- heartTr_plus %>%
+  mutate(odds_hat = y_hat / (1 - y_hat))
+```
+
+Odds scale plot
+
+```{r}
+ggplot(heartTr_plus, aes(x = age, y = odds_hat)) +
+  geom_point() + geom_line() +
+  scale_y_continuous("Odds of being alive")
+```
+
+3. Log-odds scale
+
+```{r}
+heartTr_plus <- heartTr_plus %>%
+  mutate(log_odds_hat = log(odds_hat))
+```
+
+Log-odds plot
+
+```{r}
+ggplot(heartTr_plus, aes(x = age, y = log_odds_hat)) +
+  geom_point() + geom_line() +
+  scale_y_continuous("Log(odds) of being alive")
+```
+
+Comparison
+
+* Probability scale
+  * scale: intuitive, easy to interpret
+  * function: non-linear, hard to interpret
+
+* Odds scale
+  * scale: harder to interpret
+  * function: exponential, harder to interpret
+
+* Log-odds scale
+  * scale: impossible to interpret
+  * function: linear, easy to interpret
+
+### Practice
+
+If the probability of getting accepted is y, then the odds are y/(1-y).
+
+```{r}
+# compute odds for bins
+MedGPA_binned <- MedGPA_binned %>%
+  mutate(odds = acceptance_rate / (1 - acceptance_rate))
+
+# plot binned odds
+data_space <- ggplot(data = MedGPA_binned, aes(x = mean_GPA, y = odds)) + 
+  geom_point() + geom_line()
+
+# compute odds for observations
+MedGPA_plus <- MedGPA_plus %>%
+  mutate(odds_hat = .fitted / (1 - .fitted))
+
+# logistic model on odds scale
+data_space +
+  geom_line(data = MedGPA_plus, aes(x = GPA, y = odds_hat), color = "red")
+```
+
+On the log-odds scale, the units are nearly impossible to interpret, but the function is linear, which makes it easy to understand
+
+None of these three is uniformly superior.The interpretation of the coefficients is most commonly done on the odds scale. On the odds scale, a one unit change in x leads to the odds being multiplied by a factor of $\beta_1$. 
+
+```{r}
+# compute log odds for bins
+MedGPA_binned <- MedGPA_binned %>%
+  mutate(log_odds = log(acceptance_rate / (1 - acceptance_rate)))
+
+# plot binned log odds
+data_space <- ggplot(data = MedGPA_binned, aes(x = mean_GPA, y = log_odds)) + 
+  geom_point() + geom_line()
+
+# compute log odds for observations
+MedGPA_plus <- MedGPA_plus %>%
+  mutate(log_odds_hat = log(.fitted / (1 - .fitted)))
+
+# logistic model on log odds scale
+data_space +
+  geom_line(data = MedGPA_plus, aes(x = GPA, y = log_odds_hat), color = "red")
+```
+
+## Using a logistic model
+
+```{r}
+
+# create new data frame
+new_data <- data.frame(GPA = 3.51)
+
+# make predictions
+augment(mod, newdata = new_data, type.predict = "response")
+```
+
+```{r}
+# fit model
+mod <- glm(Acceptance ~ GPA, data = MedGPA, family = binomial)
+mod
+
+# data frame with binary predictions
+tidy_mod <- augment(mod, type.predict = "response") %>% 
+  mutate(Acceptance_hat = round(.fitted)) 
+  
+# confusion matrix
+tidy_mod %>% 
+  select(Acceptance, Acceptance_hat) %>%
+  table()
+```
+

@@ -1,0 +1,79 @@
+---
+title: 'Multiple and Logistic Regression in R_Case Study: Italian restaurants in NYC'
+author: "dizhen"
+date: "5/10/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Italian restaurants in NYC
+
+```{r}
+library(dplyr)
+library(readr)
+nyc <- read_csv("data/nyc.csv")
+glimpse(nyc)
+```
+```{r}
+library(ggplot2)
+
+# Price by Food plot
+ggplot(aes(y = Price,x = Food), data = nyc) + geom_point()
+
+
+# Price by Food model
+lm(Price ~ Food, data = nyc)
+```
+
+## Incorporating another variable
+
+```{r}
+library(dplyr)
+nyc %>% 
+  group_by(East) %>%
+  summarize(mean_price = mean(Price))
+```
+```{r}
+library(plotly)
+# fit model
+hmod <- lm(Price ~ Food + Service, data = nyc)
+
+x <- seq(16, 25, length = 50)
+y <- seq(14, 24, length = 50)
+plane <- outer(x, y, function(a, b){-21.158582 + 1.495369*a + 1.704101*b})
+
+
+# draw 3D scatterplot
+p <- plot_ly(data = nyc, z = ~Price, x = ~Food, y = ~Service, opacity = 0.6) %>%
+  add_markers() 
+
+# draw a plane
+p %>%
+  add_surface(x = ~x, y = ~y, z = ~plane, showscale = FALSE) 
+```
+
+## Higher dimensions
+
+```{r}
+# Price by Food and Service and East
+lm(Price ~ Food + Service + East, data = nyc)
+```
+
+```{r}
+plane0 <- outer(x, y, function(a, b){-20.8154761 + 1.4862725*a + 1.6646884*b + 0.9648814})
+plane1 <- outer(x, y, function(a, b){-20.8154761 + 1.4862725*a + 1.6646884*b})
+
+# draw 3D scatterplot
+p <- plot_ly(data = nyc, z = ~Price, x = ~Food, y = ~Service, opacity = 0.6) %>%
+  add_markers(color = ~factor(East)) 
+
+# draw two planes
+p %>%
+  add_surface(x = ~x, y = ~y, z = ~plane0, showscale = FALSE) %>%
+  add_surface(x = ~x, y = ~y, z = ~plane1, showscale = FALSE)
+```
+
+

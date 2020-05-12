@@ -1,0 +1,80 @@
+---
+title: "Multiple and Logistic Regression in R_Parallel Slopes"
+author: "dizhen"
+date: "4/29/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## What if you have two groups?
+
+one continuous variable and one categorical variable: parallel slopes model
+```{r}
+library(dplyr)
+load("data/mario_kart.RData")
+
+mario_kart <- mario_kart %>% filter(totalPr<=100)
+
+# Explore the data
+glimpse(mario_kart)
+
+# fit parallel slopes
+mod <- lm(totalPr ~ wheels + cond, data = mario_kart)
+summary(mod)
+```
+
+## Visualizing parallel slopes models
+
+Retrieving the coefcients
+```{r}
+library(broom)
+augment(mod)
+```
+
+Parallel lines on the scatterplot
+
+```{r eval=FALSE}
+data_space +
+  geom_line(data = augment(mod), aes(y = .fitted, color = factor.year))
+```
+
+```{r}
+
+library(ggplot2)
+
+# Augment the model
+augmented_mod <- augment(mod)
+glimpse(augmented_mod)
+
+# scatterplot, with color
+data_space <- ggplot(augmented_mod, aes(x = wheels, y = totalPr, color = cond)) + 
+  geom_point()
+  
+# single call to geom_line()
+data_space + 
+  geom_line(aes(y = .fitted))
+```
+
+## Interpreting parallel slopes coefficients
+
+## Three ways to describe a model
+
+```{r}
+library(UsingR)
+data(babies)
+# build model
+lm(wt1 ~ age + parity, data = babies)
+
+# build model
+lm(wt1 ~ gestation + smoke, data = babies)
+```
+
+
+
+
+

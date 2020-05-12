@@ -1,0 +1,100 @@
+---
+title: "Multiple and Logistic Regression in R_Evaluating and extending parallel slopes model"
+author: "dizhen"
+date: "5/3/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+### Model fit, residuals, and prediction
+
+* $R^2 = 1 - \frac{SSE}{SST}$, SSE get smaller -> $R^2$ increases
+
+* As p(number of explanatory variables) increases, the $R^2$ is always getting larger. Solution: $R^2_{adj} = 1 - \frac{SSE}{SST} · \frac{n-1}{n-p-1}$
+
+Fitted values
+
+```{r}
+library(dplyr)
+library(broom)
+load("data/mario_kart.RData")
+
+mario_kart <- mario_kart %>% filter(totalPr<=100)
+
+# fit parallel slopes
+mod <- lm(totalPr ~ wheels + cond, data = mario_kart)
+summary(mod)
+
+# returns a vector
+predict(mod)
+# returns a data.frame
+augment(mod)
+```
+
+Predictions
+```{r}
+new_obs <- data.frame(wheels = 1, cond = "used")
+# returns a vector
+predict(mod, newdata = new_obs)
+
+# returns a data.frame
+augment(mod, newdata = new_obs)
+
+```
+
+```{r}
+# R^2 and adjusted R^2
+summary(mod)
+
+# add random noise
+mario_kart_noisy <- mutate(mario_kart, noise = rnorm(dim(mario_kart)[1],0,1))
+
+
+# compute new model
+mod2 <- lm(totalPr ~ wheels + cond + noise, data = mario_kart_noisy)
+
+# new R^2 and adjusted R^2
+summary(mod2)
+```
+
+
+## Understanding interaction
+
+```{r}
+# include interaction
+lm(totalPr ~ cond + duration + cond:duration, data = mario_kart)
+
+```
+
+```{r}
+library(ggplot2)
+# interaction plot
+ggplot(mario_kart, aes(y = totalPr, x = duration, color = cond)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+
+## Simpson's Paradox
+
+```{r}
+slr <- ggplot(mario_kart, aes(y = totalPr, x = duration)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE)
+
+# model with one slope
+lm(totalPr ~ duration, data=mario_kart)
+
+# plot with two slopes
+slr + aes(color = cond)
+```
+
+
+
+

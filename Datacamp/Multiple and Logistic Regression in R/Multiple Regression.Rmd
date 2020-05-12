@@ -1,0 +1,149 @@
+---
+title: "Multiple and Logistic Regression in R_Multiple Regression"
+author: "dizhen"
+date: "5/4/2020"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Adding a numerical explanatory variable
+```{r}
+library(UsingR)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(modelr)
+library(broom)
+library(plotly)
+```
+
+
+Data space is 3D
+
+```{r}
+
+
+data(babies)
+babies <- babies %>% filter(gestation < 750 & age < 50)
+
+data_space <- ggplot(babies, aes(x = gestation, y = age)) +
+  geom_point(aes(color = wt))
+data_space
+```
+
+Tiling the plane
+
+```{r}
+grid <- babies %>%
+  data_grid(
+    gestation = seq_range(gestation, by = 1),
+    age = seq_range(age, by = 1)
+  )
+mod <- lm(wt ~ gestation + age, data = babies)
+bwt_hats <- augment(mod, newdata = grid)
+```
+
+Tiles in the data space
+
+```{r}
+data_space +
+  geom_tile(data = bwt_hats, aes(fill = .fitted, alpha = 0.5)) +
+  scale_fill_continuous("wt", limits = range(babies$wt))
+```
+
+3D visualization
+
+```{r}
+mod <- lm(wt ~ gestation + age, data = babies)
+summary(mod)$coef
+
+plot_ly(data = babies, z = ~wt, x = ~gestation, y = ~age, opacity = 0.6) %>%
+  add_markers() 
+
+```
+
+### Practice
+
+```{r}
+load("data/mario_kart.RData")
+mario_kart <- mario_kart %>% filter(totalPr < 300)
+
+# Fit the model using duration and startPr
+mod <- lm(totalPr ~ duration + startPr, data = mario_kart)
+
+grid <- mario_kart %>%
+  data_grid(
+    duration = seq_range(duration, by = 1),
+    startPr = seq_range(startPr, by = 1)
+  )
+# add predictions to grid
+price_hats <- augment(mod, newdata = grid)
+
+# tile the plane
+data_space <- ggplot(mario_kart, aes(x = duration, y = startPr)) +
+  geom_point(aes(color = totalPr))
+data_space
+
+data_space + 
+  geom_tile(data = price_hats, aes(fill = .fitted), alpha = 0.5)
+```
+
+```{r}
+mod <- lm(totalPr ~ duration + startPr, data = mario_kart)
+
+x <- seq(1, 10, length = 70)
+y <- seq(0.010, 59.950, length = 70)
+plane <- outer(x, y, function(a, b){summary(mod)$coef[1,1] + 
+    summary(mod)$coef[2,1]*a + summary(mod)$coef[3,1]*b})
+
+grid <- mario_kart %>% data_grid(
+  duration = seq_range(duration ,by = 1), 
+  startPr = seq_range(startPr, by = 1)
+  )
+
+# draw the 3D scatterplot
+p <- plot_ly(data = mario_kart, z = ~totalPr, x = ~duration, y = ~startPr, opacity = 0.6) %>%
+  add_markers() 
+  
+# draw the plane
+p %>%
+  add_surface(x = ~x, y = ~y, z = ~plane, showscale = FALSE)
+  
+```
+
+## Conditional interpretation of coefficients
+
+## Adding a third (categorical) variable
+
+```{r}
+modI <- lm(totalPr ~ duration + startPr + cond, data = mario_kart)
+summary(modI)$coef
+
+x <- seq(1, 10, length = 70)
+y <- seq(0.010, 59.950, length = 70)
+
+plane0 <- outer(x, y, function(a, b){53.3447530 -0.6559841*a + 
+                                      0.1981653*b})
+plane1 <- outer(x, y, function(a, b){53.3447530 -0.6559841*a +
+                                      0.1981653*b - 8.9493214})
+
+
+# draw the 3D scatterplot
+p <- plot_ly(data = mario_kart, z = ~totalPr, x = ~duration, y = ~startPr, opacity = 0.6) %>%
+  add_markers(color = ~cond) 
+  
+# draw two planes
+p %>%
+  add_surface(x = ~x, y = ~y, z = ~plane0, showscale = FALSE) %>%
+  add_surface(x = ~x, y = ~y, z = ~plane1, showscale = FALSE)
+```
+
+
+## Higher dimensions
+
