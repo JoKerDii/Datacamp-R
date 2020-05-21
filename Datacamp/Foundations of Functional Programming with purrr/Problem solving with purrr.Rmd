@@ -1,0 +1,134 @@
+---
+title: "Foundations of Functional Programming with purrr_Problem solving with purrr"
+author: "dizhen"
+date: "5/19/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(repurrrsive)
+library(dplyr)
+library(ggplot2)
+library(purrr)
+```
+
+## Using purrr in your workflow
+
+```{r}
+# Load the data
+data(gh_users)
+
+# Check if data has names
+names(gh_users)
+
+# Map over name element of list
+map(gh_users, ~.x[["name"]])
+```
+
+```{r}
+# Name gh_users with the names of the users
+gh_users_named <- gh_users %>% 
+    set_names(map_chr(gh_users, "name"))
+
+# Check gh_repos structure
+# str(gh_repos)
+
+# Name gh_repos with the names of the repo owner
+gh_repos_named <- gh_repos %>% 
+    map_chr(~ .[[1]]$owner$login) %>% 
+    set_names(gh_repos, .)
+```
+
+```{r}
+
+# Determine who joined github first
+map_chr(gh_users, ~.[['created_at']]) %>%
+      set_names(map_chr(gh_users, "name")) %>%
+    sort()
+
+# Determine user versus organization
+map_lgl(gh_users, ~.[["type"]] == "User") 
+
+# Determine who has the most public repositories
+map_int(gh_users, ~.[["public_repos"]]) %>%
+    set_names(map_chr(gh_users, "name")) %>%
+    sort()
+```
+
+
+
+## Even more complex problems
+
+```{r}
+# Map over gh_repos to generate numeric output
+map(gh_repos,
+    ~map_dbl(.x, 
+             ~.x[["size"]])) %>%
+    # Grab the largest element
+    map(~max(.x))
+```
+
+
+## Graphs in purrr
+
+```{r }
+
+# method 1
+
+fo <- map(gh_users, ~.x[["followers"]])
+pu <- map(gh_users, ~.x[["public_repos"]])
+gh_users_df <- data.frame(public_repos = unlist(pu), followers = unlist(fo))
+rownames(gh_users_df) <- c(1:6)
+
+
+# Scatter plot of public repos and followers
+ggplot(data = gh_users_df, 
+       aes(x = public_repos, y = followers))+
+    geom_point()
+
+# Histogram of followers        
+gh_users_df %>%
+    ggplot(aes(x = followers))+
+        geom_histogram()
+```
+
+```{r}
+# method 2
+# Create a dataframe with four columns
+map_df(gh_users, `[`, 
+       c("login", "name", "followers", "public_repos")) %>%
+       # Plot followers by public_repos
+    ggplot(., 
+         aes(x = followers, y = public_repos)) + 
+        # Create scatter plots
+        geom_point()
+```
+
+```{r}
+library(tidyr)
+
+# Turn data into correct dataframe format
+film_by_character <- tibble(filmtitle = map_chr(sw_films, "title")) %>%
+    mutate(filmtitle, characters = map(sw_films, "characters")) %>%
+    unnest()
+
+# Pull out elements from sw_people
+sw_characters <- map_df(sw_people, `[`, c("height","mass","name","url"))
+
+# Join our two new objects
+character_data <- inner_join(film_by_character, sw_characters, by = c("characters" = "url")) %>%
+    # Make sure the columns are numbers
+    mutate(height = as.numeric(height), mass = as.numeric(mass))
+
+# Plot the heights, faceted by film title
+ggplot(character_data, aes(x = height)) +
+  geom_histogram(stat = "count") +
+  facet_wrap(~ filmtitle)
+```
+

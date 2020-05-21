@@ -1,0 +1,117 @@
+---
+title: "Foundations of Functional Programming with purrr_Troubleshooting lists with purrr"
+author: "dizhen"
+date: "5/16/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(repurrrsive)
+library(dplyr)
+library(ggplot2)
+library(purrr)
+```
+
+## How to purrr safely()
+
+```{r}
+# Map safely over log
+a <- list(-10, 1, 10, 0) %>% 
+      map(safely(log, otherwise = NA_real_)) %>%
+    # Transpose the result
+      transpose()
+
+# Print the list
+a
+
+# Print the result element in the list
+a[["result"]]
+
+# Print the error element in the list
+a[["error"]]
+```
+
+```{r}
+# Load sw_people data
+data(sw_people)
+
+# Map over sw_people and pull out the height element
+height_cm <- map(sw_people, "height") %>%
+  map(function(x){
+    ifelse(x == "unknown",NA,
+    as.numeric(x))
+})
+```
+
+```{r}
+
+# Map over sw_people and pull out the height element
+height_ft <- map(sw_people , "height") %>% 
+  map(safely(function(x){
+    x * 0.0328084
+  }, quiet = FALSE)) %>% 
+transpose()
+
+# Print your list, the result element, and the error element
+# height_ft
+# height_ft[["result"]]
+# height_ft[["error"]]
+```
+
+
+## Another way to possibly() purrr
+
+safely() outputs an NA in place of an error
+
+possibly() will run through your code and implement your desired changes without printing out the error messages.
+
+```{r}
+# Take the log of each element in the list
+a <- list(-10, 1, 10, 0) %>% 
+  map(possibly(function(x){
+    log(x)
+},NA_real_))
+```
+```{r}
+
+# Create a piped workflow that returns double vectors
+height_cm %>%  
+  map_dbl(possibly(function(x){
+  # Convert centimeters to feet
+    x * 0.0328084
+}, NA_real_)) 
+```
+
+## purrr is a walk() in the park
+
+If you need to print, using walk() prints out lists in a more compact and human-readable way, without all those brackets. walk() is also great for printing out plots without printing anything to the console.
+
+```{r eval = FALSE}
+# Print with walk
+walk(people_by_film, print)
+sw_films
+```
+ 
+ One more use of walk(), specifically creating plots using walk()
+```{r}
+# Load the gap_split data
+data(gap_split)
+
+# Map over the first 10 elements of gap_split
+plots <- map2(gap_split[1:10], 
+              names(gap_split[1:10]), 
+              ~ ggplot(.x, aes(year, lifeExp)) + 
+                geom_line() +
+                labs(title = .y))
+
+# Object name, then function name
+walk(plots, print)
+```
+ 
+

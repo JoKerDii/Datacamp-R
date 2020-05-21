@@ -1,0 +1,136 @@
+---
+title: "Foundations of Functional Programming with purrr_More complex iterations"
+author: "dizhen"
+date: "5/14/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Working with unnamed lists
+
+```{r}
+library(repurrrsive)
+library(dplyr)
+library(purrr)
+data(sw_films)
+str(sw_films)
+```
+
+```{r}
+# Use pipes to check for names in sw_films
+sw_films %>%
+    names()
+
+# sw_films[[1]] %>%
+#     names()
+```
+
+```{r}
+# Set names so each element of the list is named for the film title
+sw_films_named <- sw_films %>% 
+  set_names(map_chr(sw_films, "title"))
+
+# Check to see if the names worked/are correct
+names(sw_films_named)
+```
+
+```{r}
+# Create a list of values from 1 through 10
+numlist <- list(1,2,3,4,5,6,7,8,9,10)
+
+# Iterate over the numlist 
+map(numlist, ~.x %>% sqrt() %>% sin())
+```
+
+## More map()
+
+```{r}
+# List of sites north, east, and west
+sites <- list("north","east","west")
+
+# Create a list of dataframes, each with a years, a, and b column
+list_of_df <-  map(sites,  
+  ~data.frame(sites = .x,
+              a = rnorm(mean = 5,   n = 200, sd = (5/2)),
+              b = rnorm(mean = 200, n = 200, sd = 15)))
+
+list_of_df
+```
+
+```{r}
+# Map over the models to look at the relationship of a vs b
+list_of_df %>%
+    map(~ lm(a ~ b, data = .)) %>%
+    map(summary)
+```
+
+```{r}
+# Pull out the director element of sw_films in a list and character vector
+map(sw_films, ~.x[["director"]])
+map_chr(sw_films, ~.x[["director"]])
+
+# Compare outputs when checking if director is George Lucas
+map(sw_films, ~.x[["director"]] == "George Lucas")
+map_lgl(sw_films, ~.x[["director"]] == "George Lucas")
+```
+
+```{r}
+
+# Pull out episode_id element as list
+map(sw_films, ~.x[["episode_id"]])
+
+# Pull out episode_id element as double vector
+map_dbl(sw_films, ~.x[["episode_id"]])
+
+# Pull out episode_id element as list
+map(sw_films, ~.x[["episode_id"]])
+
+# Pull out episode_id element as integer vector
+map_int(sw_films, ~.x[["episode_id"]])
+```
+
+
+## map2() and pmap()
+
+```{r}
+# List of 1, 2 and 3
+means <- list(1,2,3)
+
+# Create sites list
+sites <- list("north","west","east")
+
+# Map over two arguments: sites and means
+list_of_files_map2 <- map2(sites, means, ~data.frame(sites = .x,
+                             a = rnorm(mean = .y, n = 200, sd = (5/2))))
+
+list_of_files_map2
+```
+
+```{r}
+sigma <- means
+means2 <- as.numeric(means)/2
+sigma2 <- means2
+
+# Create a master list, a list of lists
+pmapinputs <- list(sites = sites, means = means, sigma = sigma, 
+                   means2 = means2, sigma2 = sigma2)
+
+# Map over the master list
+list_of_files_pmap <- pmap(pmapinputs, 
+  function(sites, means, sigma, means2, sigma2) 
+    data.frame(sites = sites,
+        a = rnorm(mean = means,  n = 200, sd = sigma),
+        b = rnorm(mean = means2, n = 200, sd = sigma2)))
+
+list_of_files_pmap
+```
+
+
+
+
+
